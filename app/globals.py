@@ -76,3 +76,9 @@ EMPTY_INPUT_MSG = Args.EMPTY_INPUT_MSG
 fastapi app instance
 """
 USER_CONTEXT_DICT: Dict[str, Union[None, List]] = {}
+
+"""
+SSE variables
+"""
+STATUS_STREAM_DELAY = 5
+STATUS_STREAM_RETRY_TIMEOUT = 30000

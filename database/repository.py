@@ -1,7 +1,10 @@
+import asyncio
 import logging
 
+from fastapi import Request
 from sqlalchemy.orm import Session
 
+from app.globals import STATUS_STREAM_DELAY, STATUS_STREAM_RETRY_TIMEOUT
 from database import models, schemas
 
 logger = logging.getLogger(__name__)
@@ -61,6 +64,36 @@ def get_chatroom(
     return messages[::-1]
 
 
-def create_message(db: Session, message: schemas.MessageCreate, user_id: int):
-    # returns content for StreamingResponse
-    pass
+async def compute_status(message: schemas.MessageCreate):
+    # Do some heavy computation
+    await asyncio.sleep(STATUS_STREAM_DELAY)
+    return {"some_end_condition": True}
+
+
+async def create_message(
+    request: Request, db: Session, message: schemas.MessageCreate, user_id: int
+):
+    previous_status = None
+    while True:
+        if await request.is_disconnected():
+            logger.debug("Request disconnected")
+            break
+
+        if previous_status and previous_status["some_end_condition"]:
+            logger.debug("Request completed. Disconnecting now")
+            yield {"event": "end", "data": ""}
+            break
+
+        current_status = await compute_status(message)
+        if previous_status != current_status:
+            yield {
+                "event": "update",
+                "retry": STATUS_STREAM_RETRY_TIMEOUT,
+                "data": current_status,
+            }
+            previous_status = current_status
+            logger.debug("Current status :%s", current_status)
+        else:
+            logger.debug("No change in status...")
+
+        await asyncio.sleep(STATUS_STREAM_DELAY)

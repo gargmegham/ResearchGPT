@@ -4,15 +4,15 @@ import os
 from functools import partial
 
 from fastapi import Depends, FastAPI, Request, Response
-from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sse_starlette.sse import EventSourceResponse
 
 from app.globals import *
 from database import SessionLocal, repository, schemas
 
 builtins.print = partial(print, flush=True)
 
-logging.config.fileConfig("config/logging.conf", disable_existing_loggers=True)
+logging.config.fileConfig("config/logging.conf", disable_existing_loggers=False)
 
 from database import schemas
 
@@ -153,9 +153,10 @@ def get_chatrooms(
 @app.post("/chat/", response_model=schemas.Message)
 def create_message(
     message: schemas.MessageCreate,
+    request: Request,
     db: Session = Depends(get_db),
     user_id: int = Depends(get_user_id),
 ):
-    return StreamingResponse(
-        repository.create_message(db=db, message=message, user_id=user_id)
+    return EventSourceResponse(
+        repository.create_message(request, db=db, message=message, user_id=user_id)
     )
