@@ -1,0 +1,2 @@
+class LongInputException(Exception):
+    pass
