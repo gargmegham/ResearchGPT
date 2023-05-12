@@ -6,8 +6,7 @@ source .venv/bin/activate
 
 APP_NAME="ResearchGPT-ChatRoom-Server"
 APP_PATH="app:app"
-APP_LOG="$DIR/log/console.log"
-API_LOG="$DIR/log/api.log"
+APP_LOG="$DIR/log/bash.log"
 HOST="0.0.0.0"
 PORT="8080"
 

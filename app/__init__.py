@@ -16,6 +16,15 @@ logging.config.fileConfig("config/logging.conf", disable_existing_loggers=True)
 
 from database import schemas
 
+"""
+Create directories if not exist
+"""
+os.makedirs(LOG_DIR, exist_ok=True)
+with open(os.path.join(LOG_DIR, "bash.log"), "a") as f:
+    pass
+with open(os.path.join(LOG_DIR, "app.log"), "a") as f:
+    pass
+
 # get root logger
 logger = logging.getLogger(__name__)
 
@@ -26,15 +35,8 @@ app = FastAPI(
 )
 
 
-"""
-Create directories if not exist
-"""
-os.makedirs(LOG_DIR, exist_ok=True)
-
-
 @app.exception_handler(Exception)
 async def exception_handler(request: Request, exc: Exception):
-    logger.error(f"Exception: {exc}")
     return Response("Internal server error", status_code=500)
 
 

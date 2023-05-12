@@ -10,14 +10,11 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 from database import Base
 
 logger = logging.getLogger(__name__)
-
-Base = declarative_base()
 
 
 class ChatRoom(Base):
