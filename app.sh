@@ -5,7 +5,7 @@ cd $DIR
 source .venv/bin/activate
 
 APP_NAME="ResearchGPT-ChatRoom-Server"
-APP_PATH="app.main:app"
+APP_PATH="app:app"
 APP_LOG="$DIR/log/console.log"
 API_LOG="$DIR/log/api.log"
 HOST="0.0.0.0"

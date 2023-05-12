@@ -6,3 +6,5 @@ __pycache__
 mock_search.json
 *.db
 *.log
+samples
+jsons

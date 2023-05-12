@@ -4,8 +4,6 @@ from configparser import RawConfigParser
 from pathlib import Path
 from typing import Dict, List, Union
 
-from fastapi import FastAPI
-
 from config.en import Args
 
 logger = logging.getLogger(__name__)
@@ -15,7 +13,7 @@ OpenAI API SECRETS
 """
 config = RawConfigParser()
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONFIG_FILE = BASE_DIR / "config.ini"
+CONFIG_FILE = BASE_DIR / "config/config.ini"
 config.read(CONFIG_FILE)
 
 """
@@ -77,9 +75,4 @@ EMPTY_INPUT_MSG = Args.EMPTY_INPUT_MSG
 """
 fastapi app instance
 """
-user_context_dict: Dict[str, Union[None, List]] = {}
-app = FastAPI(
-    title="ResearchGPT",
-    description="ResearchGPT is a tool for researchers to generate ideas and insights.",
-    version="0.1.0",
-)
+USER_CONTEXT_DICT: Dict[str, Union[None, List]] = {}

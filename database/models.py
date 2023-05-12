@@ -1,8 +1,15 @@
 import logging
 from datetime import datetime
 
-from sqlalchemy import (BIGINT, Column, DateTime, ForeignKey, String, Text,
-                        UniqueConstraint)
+from sqlalchemy import (
+    BIGINT,
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 

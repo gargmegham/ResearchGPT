@@ -9,7 +9,9 @@ Tested on `MacOS` and `Ubuntu20 LTS`
 Python version `>= python3.11.1`
 
 ## Installation
+
 1. Install poetry
+
 ```
 cd $PROJECT_ROOT
 poetry install
@@ -20,16 +22,19 @@ poetry install
 Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and [Organization ID](https://platform.openai.com/account/org-settings)
 
 Then export to confi.ini file use config.ini.example for reference
+
 ```
-cp config.ini.example config.ini
+cp config/config.ini.example config/config.ini
 ```
 
 Start the server using bash script
+
 ```
 bash ./app.sh start --host 0.0.0.0 --port 8080
 ```
 
 You should see the below sample stdout
+
 ```
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.

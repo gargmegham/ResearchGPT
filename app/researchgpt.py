@@ -458,7 +458,7 @@ class ResearchGPTThread(threading.Thread):
 
     @staticmethod
     def get_user_context(*, researchgpt, user: str):
-        context = user_context_dict[user] if user in user_context_dict else None
+        context = USER_CONTEXT_DICT[user] if user in USER_CONTEXT_DICT else None
         if context is None:
             context = [
                 {"role": "system", "content": researchgpt.get_prompt("chat-agent.txt")},
@@ -504,7 +504,7 @@ class ResearchGPTThread(threading.Thread):
             response = create_response(f"{content}", complete=False)
             if verbose:
                 print(content, end="")
-            user_context_dict[receiver] = context
+            USER_CONTEXT_DICT[receiver] = context
         if verbose:
             print()
 
@@ -553,7 +553,7 @@ class ResearchGPTThread(threading.Thread):
                         verbose=True,
                     )
                     n_tokens_list = researchgpt.count_context_tokens(
-                        user_context_dict[sender]
+                        USER_CONTEXT_DICT[sender]
                     )
                     print(
                         f"[context size]: {n_tokens_list} -> total {sum(n_tokens_list)} tokens"
