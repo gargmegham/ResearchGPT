@@ -12,7 +12,7 @@ from database import SessionLocal, repository, schemas
 
 builtins.print = partial(print, flush=True)
 
-logging.config.fileConfig("logging.conf", disable_existing_loggers=True)
+logging.config.fileConfig("config/logging.conf", disable_existing_loggers=True)
 
 from database import schemas
 
