@@ -4,6 +4,7 @@ import os
 from functools import partial
 
 from fastapi import Depends, FastAPI, Request, Response
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.globals import *
@@ -145,3 +146,14 @@ def get_chatrooms(
     user_id: int = Depends(get_user_id),
 ):
     return repository.get_chatrooms(db=db, user_id=user_id)
+
+
+@app.post("/chat/", response_model=schemas.Message)
+def create_message(
+    message: schemas.MessageCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_user_id),
+):
+    return StreamingResponse(
+        repository.create_message(db=db, message=message, user_id=user_id)
+    )

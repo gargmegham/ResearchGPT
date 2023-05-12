@@ -7,6 +7,16 @@ from app.globals import SECRET_KEY
 logger = logging.getLogger(__name__)
 
 
+class Message(BaseModel):
+    output: str
+    typing: bool = False
+
+
+class MessageCreate(BaseModel):
+    input: str
+    chatroom_id: int
+
+
 class User(BaseModel):
     username: str
     password: str

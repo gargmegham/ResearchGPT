@@ -59,3 +59,8 @@ def get_chatroom(
         messages = messages.filter(models.ChatRoomMessage.id > last_message_id)
     messages = messages.limit(10).all()
     return messages[::-1]
+
+
+def create_message(db: Session, message: schemas.MessageCreate, user_id: int):
+    # returns content for StreamingResponse
+    pass
