@@ -93,7 +93,7 @@ async def delete_chatroom(
 
 
 async def get_contexts_sorted_from_recent_to_past(
-    user_id: int, chatroom_ids: list[int], chatroom_id: int
+    user_id: int, chatroom_ids: list[int]
 ) -> list[UserGptContext]:
     """
     Returns a list of contexts sorted from recent to past.
@@ -102,7 +102,7 @@ async def get_contexts_sorted_from_recent_to_past(
     """
     if len(chatroom_ids) == 0:
         # create new chatroom
-        return [await create_new_chatroom(user_id=user_id, new_chatroom_id=chatroom_id)]
+        return [await create_new_chatroom(user_id=user_id)]
     else:
         # get latest chatroom
         contexts: list[UserGptContext] = await gather(

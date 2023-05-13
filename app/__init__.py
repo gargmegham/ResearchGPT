@@ -192,21 +192,16 @@ def get_chatrooms(
     return repository.get_chatrooms(db=db, user_id=user_id)
 
 
-@app.websocket("/chat-socket/{chatroom_id}/")
+@app.websocket("/chat-socket/")
 async def ws_chatgpt(
     websocket: WebSocket,
     user_id: int = Depends(get_user_id_websocket),
-    chatroom_id: int = Path(..., title="The ID of the chatroom to join"),
 ):
     try:
-        db = SessionLocal()
-        if not repository.validate_id(db, chatroom_id, models.ChatRoom):
-            raise ValueError("Chatroom not found!")
         await websocket.accept()
         await begin_chat(
             websocket=websocket,
             user_id=user_id,
-            chatroom_id=chatroom_id,
         )
     except ValueError as exception:
         logger.error(exception, exc_info=True)
@@ -224,5 +219,3 @@ async def ws_chatgpt(
             msg=f"An unknown error has occurred. close the connection. ({exception})",
             chatroom_id="null",
         )
-    finally:
-        db.close()

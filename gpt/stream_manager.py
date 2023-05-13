@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 async def begin_chat(
     websocket: WebSocket,
     user_id: int,
-    chatroom_id: int,
 ) -> None:
     # initialize variables
     buffer: BufferedUserContext = BufferedUserContext(
@@ -34,7 +33,6 @@ async def begin_chat(
         sorted_contexts=await get_contexts_sorted_from_recent_to_past(
             user_id=user_id,
             chatroom_ids=await ChatGptCacheManager.get_all_chatrooms(user_id=user_id),
-            chatroom_id=chatroom_id,
         ),
     )
 
