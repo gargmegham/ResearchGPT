@@ -64,7 +64,7 @@ async def exception_handler(request: Request, exc: Exception):
 
 
 @app.middleware("http")
-async def authentication_middle(request: Request, call_next):
+async def authentication_middleware(request: Request, call_next):
     """
     Sample cookie: XSRF-TOKEN=; pubtrawlr_session=;
     """
@@ -115,7 +115,15 @@ def get_user_id_websocket(websocket: WebSocket):
     """
     Dependency to get user_id
     """
-    return websocket.user_id
+    try:
+        cookies = websocket.headers["cookie"]
+        xsrf = cookies.split("XSRF-TOKEN=")[1].split(";")[0]
+        session = cookies.split("pubtrawlr_session=")[1].split(";")[0]
+        if xsrf and session:
+            # TODO replace with actual authentication
+            return 25
+    except:
+        return None
 
 
 @app.get("/")
@@ -201,7 +209,7 @@ async def ws_chatgpt(
         await websocket.accept()  # accept websocket
         await begin_chat(
             websocket=websocket,
-            user_id=25,
+            user_id=str(user_id),
         )
     except WebSocketDisconnect:
         ...
