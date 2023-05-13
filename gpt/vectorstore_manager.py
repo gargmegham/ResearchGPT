@@ -20,6 +20,7 @@ class VectorStoreManager:
             model_name=tokenizer_model,
         ).split_text(text)
         await cache.vectorstore.aadd_texts(texts=texts)
+        return texts
 
     @staticmethod
     async def asimilarity_search(
