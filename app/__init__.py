@@ -188,7 +188,7 @@ def get_chatrooms(
     return repository.get_chatrooms(db=db, user_id=user_id)
 
 
-@app.post("/chat/", response_model=schemas.Message)
+@app.post("/chat-stream/", response_model=schemas.Message)
 def create_message(
     message: schemas.MessageCreate,
     request: Request,
@@ -200,7 +200,7 @@ def create_message(
     )
 
 
-@app.websocket("/chatgpt/{api_key}")
+@app.websocket("/chat-socket/")
 async def ws_chatgpt(
     websocket: WebSocket,
     user_id: int = Depends(get_user_id_websocket),
