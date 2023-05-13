@@ -79,6 +79,64 @@ class Responses_500:
     )
 
 
+@dataclass(frozen=True)
+class Responses_400:
+    no_email_or_password: APIException = APIException(
+        status_code=400,
+        internal_code=1,
+        msg="Email and PW must be provided.",
+        detail="Email and PW must be provided.",
+    )
+    email_already_exists: APIException = APIException(
+        status_code=400,
+        internal_code=2,
+        msg="Email already exists.",
+        detail="Email already exists.",
+    )
+    not_supported_feature: APIException = APIException(
+        status_code=400,
+        internal_code=3,
+        msg="Not supported feature.",
+        detail="Not supported feature.",
+    )
+    max_key_count_exceed: APIException = APIException(
+        status_code=400,
+        internal_code=8,
+        msg="Max Key Count Reached",
+        detail="Max Key Count Reached",
+    )
+    max_whitekey_count_exceed: APIException = APIException(
+        status_code=400,
+        internal_code=9,
+        msg="Max Whitelist Count Reached",
+        detail="Max Whitelist Count Reached",
+    )
+    invalid_ip: APIException = APIException(
+        status_code=400,
+        internal_code=10,
+        msg="invalid IP : {ip}",
+        detail="invalid IP : {ip}",
+    )
+    invalid_api_query: APIException = APIException(
+        status_code=400,
+        internal_code=11,
+        msg="Query String Only Accept key and timestamp.",
+        detail="Query String Only Accept key and timestamp.",
+    )
+    kakao_send_failure: APIException = APIException(
+        status_code=400,
+        internal_code=15,
+        msg="Failed to send KAKAO MSG.",
+        detail="Failed to send KAKAO MSG.",
+    )
+    websocket_in_use: APIException = APIException(
+        status_code=400,
+        internal_code=16,
+        msg="Websocket is already in use.",
+        detail="Websocket is already in use.",
+    )
+
+
 class InternalServerError(APIException):
     status_code: int = 500
     internal_code: int = 9999

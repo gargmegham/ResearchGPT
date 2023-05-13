@@ -3,13 +3,16 @@ import logging
 import os
 from functools import partial
 
-from fastapi import Depends, FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from app.dependencies import process_pool_executor
+from app.exceptions import Responses_400
 from app.globals import *
 from database import SessionLocal, cache, repository, schemas
+from gpt.stream_manager import begin_chat
+from gpt.websocket_manager import SendToWebsocket
 
 builtins.print = partial(print, flush=True)
 
@@ -108,6 +111,13 @@ def get_user_id(request: Request):
     return request.state.user_id
 
 
+def get_user_id_websocket(websocket: WebSocket):
+    """
+    Dependency to get user_id
+    """
+    return websocket.user_id
+
+
 @app.get("/")
 def root():
     return {"message": "Server is running..."}
@@ -180,3 +190,27 @@ def create_message(
     return EventSourceResponse(
         repository.create_message(request, db=db, message=message, user_id=user_id)
     )
+
+
+@app.websocket("/chatgpt/{api_key}")
+async def ws_chatgpt(
+    websocket: WebSocket,
+    user_id: int = Depends(get_user_id_websocket),
+):
+    if OPENAI_API_KEY is None:
+        raise Responses_400.not_supported_feature
+    try:
+        await websocket.accept()  # accept websocket
+        await begin_chat(
+            websocket=websocket,
+            user_id=25,
+        )
+    except WebSocketDisconnect:
+        ...
+    except Exception as exception:
+        logger.error(exception, exc_info=True)
+        await SendToWebsocket.message(
+            websocket=websocket,
+            msg=f"An unknown error has occurred. close the connection. ({exception})",
+            chat_room_id="null",
+        )

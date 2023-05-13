@@ -13,7 +13,7 @@ from app.exceptions import (
 from gpt.config import ChatGPTConfig
 
 if TYPE_CHECKING:
-    from gpt.models import UserGptContext, LlamaCppModel
+    from gpt.models import LlamaCppModel, UserGptContext
 
 
 def can_avoid_in_buffer(text_buffer: str, text: str, avoids: list[str]) -> bool:
@@ -232,7 +232,7 @@ def get_llama(llama_cpp_model: "LlamaCppModel") -> LlamaCpp:
 
 if __name__ == "__main__":
     from app.dependencies import process_manager
-    from gpt.models import UserGptContext, LLMModels
+    from gpt.models import LLMModels, UserGptContext
 
     m_queue = process_manager.Queue()
     m_done = process_manager.Event()

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from asyncio import sleep
 from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest
@@ -14,11 +15,9 @@ from app.exceptions import (
     GptLengthException,
     GptTextGenerationException,
 )
-from gpt.models import GptRoles, UserGptContext
 from gpt.config import ChatGPTConfig
 from gpt.message_manager import MessageManager
-from gpt.models import SendInitToWebsocket, SendToStream
-import logging
+from gpt.models import GptRoles, SendInitToWebsocket, SendToStream, UserGptContext
 
 logger = logging.getLogger(__name__)
 
