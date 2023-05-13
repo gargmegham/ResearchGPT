@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, Request, Response
 from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
+from app.dependencies import process_pool_executor
 from app.globals import *
 from database import SessionLocal, cache, repository, schemas
 
@@ -49,6 +50,7 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
+    process_pool_executor.shutdown()
     await cache.close()
     logger.critical("DB & CACHE connection closed!")
 

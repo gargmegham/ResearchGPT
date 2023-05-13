@@ -23,6 +23,9 @@ mysql-connector-python = "^8.0.33"
 sse-starlette = "^1.5.0"
 redis = "^4.5.5"
 orjson = "^3.8.12"
+transformers = "^4.29.1"
+unstructured = "^0.6.6"
+httpx = "^0.24.0"
 
 
 [build-system]
