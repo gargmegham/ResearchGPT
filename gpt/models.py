@@ -249,7 +249,7 @@ class MessageHistory:  # message history for user and gpt
 @dataclass
 class UserGptProfile:  # user gpt profile for user and gpt
     user_id: str
-    chat_room_id: str = field(default_factory=lambda: uuid4().hex)
+    chatroom_id: str = field(default_factory=lambda: uuid4().hex)
     created_at: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
     user_role: str = field(default=GptRoles.USER.value)
     gpt_role: str = field(default=GptRoles.GPT.value)
@@ -348,8 +348,8 @@ class UserGptContext:  # user gpt context for user and gpt
         return self.user_gpt_profile.user_id
 
     @property
-    def chat_room_id(self) -> str:
-        return self.user_gpt_profile.chat_room_id
+    def chatroom_id(self) -> str:
+        return self.user_gpt_profile.chatroom_id
 
     def __repr__(self) -> str:
         gpt_model: LLMModels = self.gpt_model
@@ -359,7 +359,7 @@ class UserGptContext:  # user gpt context for user and gpt
         ).strftime("%Y-%m-%d %H:%M:%S")
         return f"""# User Info
 - Your ID: `{self.user_id}`
-- This chatroom ID: `{self.chat_room_id}`
+- This chatroom ID: `{self.chatroom_id}`
 - Your profile created at: `{time_string}`
 
 # LLM Info
@@ -390,18 +390,18 @@ class UserGptContext:  # user gpt context for user and gpt
     def construct_default(
         cls,
         user_id: str,
-        chat_room_id: str,
+        chatroom_id: str,
         gpt_model: LLMModels = LLMModels.gpt_3_5_turbo,
     ):
         return cls(
-            user_gpt_profile=UserGptProfile(user_id=user_id, chat_room_id=chat_room_id),
+            user_gpt_profile=UserGptProfile(user_id=user_id, chatroom_id=chatroom_id),
             gpt_model=gpt_model,
         )
 
     def reset(self):
         for k, v in self.construct_default(
             self.user_id,
-            self.chat_room_id,
+            self.chatroom_id,
             self.gpt_model,
         ).__dict__.items():
             setattr(self, k, v)
@@ -438,18 +438,18 @@ class UserGptContext:  # user gpt context for user and gpt
 
 class MessageFromWebsocket(BaseModel):
     msg: str
-    chat_room_id: str
+    chatroom_id: str
 
 
 class InitMessage(BaseModel):
     previous_chats: list[dict]
-    chat_room_ids: list[str]
+    chatroom_ids: list[str]
 
 
 class MessageToWebsocket(BaseModel):
     msg: str | None
     finish: bool
-    chat_room_id: str
+    chatroom_id: str
     is_user: bool
     init: bool = False
     model_name: str | None = None

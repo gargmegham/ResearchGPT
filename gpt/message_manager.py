@@ -39,7 +39,7 @@ class MessageManager:
         num_of_deleted_histories: int = user_gpt_context.ensure_token_not_exceed()
         await ChatGptCacheManager.append_message_history(
             user_id=user_gpt_context.user_id,
-            chat_room_id=user_gpt_context.chat_room_id,
+            chatroom_id=user_gpt_context.chatroom_id,
             role=role,
             message_history=message_history,
         )
@@ -48,13 +48,13 @@ class MessageManager:
             asyncio.gather(
                 ChatGptCacheManager.lpop_message_history(
                     user_id=user_gpt_context.user_id,
-                    chat_room_id=user_gpt_context.chat_room_id,
+                    chatroom_id=user_gpt_context.chatroom_id,
                     role=GptRoles.GPT,
                     count=num_of_deleted_histories,
                 ),
                 ChatGptCacheManager.lpop_message_history(
                     user_id=user_gpt_context.user_id,
-                    chat_room_id=user_gpt_context.chat_room_id,
+                    chatroom_id=user_gpt_context.chatroom_id,
                     role=GptRoles.USER,
                     count=num_of_deleted_histories,
                 ),
@@ -83,14 +83,14 @@ class MessageManager:
         if rpop:
             await ChatGptCacheManager.rpop_message_history(
                 user_id=user_gpt_context.user_id,
-                chat_room_id=user_gpt_context.chat_room_id,
+                chatroom_id=user_gpt_context.chatroom_id,
                 role=role,
                 count=count,
             )
         else:
             await ChatGptCacheManager.lpop_message_history(
                 user_id=user_gpt_context.user_id,
-                chat_room_id=user_gpt_context.chat_room_id,
+                chatroom_id=user_gpt_context.chatroom_id,
                 role=role,
                 count=count,
             )
@@ -121,7 +121,7 @@ class MessageManager:
         num_of_deleted_histories: int = user_gpt_context.ensure_token_not_exceed()
         await ChatGptCacheManager.set_message_history(
             user_id=user_gpt_context.user_id,
-            chat_room_id=user_gpt_context.chat_room_id,
+            chatroom_id=user_gpt_context.chatroom_id,
             role=role,
             message_history=message_history_to_change,
             index=index,
@@ -130,7 +130,7 @@ class MessageManager:
             for role in (GptRoles.GPT, GptRoles.USER):
                 await ChatGptCacheManager.lpop_message_history(
                     user_id=user_gpt_context.user_id,
-                    chat_room_id=user_gpt_context.chat_room_id,
+                    chatroom_id=user_gpt_context.chatroom_id,
                     role=role,
                     count=num_of_deleted_histories,
                 )
@@ -145,6 +145,6 @@ class MessageManager:
         setattr(user_gpt_context, f"{role}_message_tokens", 0)
         await ChatGptCacheManager.delete_message_history(
             user_id=user_gpt_context.user_id,
-            chat_room_id=user_gpt_context.chat_room_id,
+            chatroom_id=user_gpt_context.chatroom_id,
             role=role,
         )

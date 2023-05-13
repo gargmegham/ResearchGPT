@@ -244,6 +244,6 @@ if __name__ == "__main__":
         m_queue=m_queue,
         m_done=m_done,
         user_gpt_context=UserGptContext.construct_default(
-            user_id="test_user_id", chat_room_id="test_chat_room_id"
+            user_id="test_user_id", chatroom_id="test_chatroom_id"
         ),
     )

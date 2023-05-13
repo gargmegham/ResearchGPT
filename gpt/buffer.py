@@ -18,9 +18,9 @@ class BufferedUserContext:
     def delete_context(self, index: int) -> None:
         del self.sorted_ctxts[index]
 
-    def find_index_of_chatroom(self, chat_room_id: str) -> int | None:
+    def find_index_of_chatroom(self, chatroom_id: str) -> int | None:
         try:
-            return self.sorted_chat_room_ids.index(chat_room_id)
+            return self.sorted_chatroom_ids.index(chatroom_id)
         except ValueError:
             return None
 
@@ -32,16 +32,16 @@ class BufferedUserContext:
         return len(self.sorted_ctxts)
 
     @property
-    def current_chat_room_id(self) -> str:
-        return self.current_user_gpt_context.chat_room_id
+    def current_chatroom_id(self) -> str:
+        return self.current_user_gpt_context.chatroom_id
 
     @property
     def sorted_user_gpt_contexts(self) -> list[UserGptContext]:
         return self.sorted_ctxts
 
     @property
-    def sorted_chat_room_ids(self) -> list[str]:
-        return [context.chat_room_id for context in self.sorted_ctxts]
+    def sorted_chatroom_ids(self) -> list[str]:
+        return [context.chatroom_id for context in self.sorted_ctxts]
 
     @property
     def current_user_gpt_context(self) -> UserGptContext:
