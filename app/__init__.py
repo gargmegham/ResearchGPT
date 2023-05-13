@@ -197,8 +197,6 @@ async def ws_chatgpt(
     websocket: WebSocket,
     user_id: int = Depends(get_user_id_websocket),
 ):
-    if OPENAI_API_KEY is None:
-        raise Responses_400.not_supported_feature
     try:
         await websocket.accept()  # accept websocket
         await begin_chat(
