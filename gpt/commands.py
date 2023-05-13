@@ -56,13 +56,13 @@ class CommandResponse:
 
 
 async def create_new_chatroom(
-    user_id: str,
-    new_chatroom_id: str | None = None,
+    user_id: int,
+    new_chatroom_id: int,
     buffer: BufferedUserContext | None = None,
 ) -> UserGptContext:
     default: UserGptContext = UserGptContext.construct_default(
         user_id=user_id,
-        chatroom_id=new_chatroom_id if new_chatroom_id else uuid4().hex,
+        chatroom_id=new_chatroom_id,
     )
     await ChatGptCacheManager.create_context(user_gpt_context=default)
     if buffer is not None:
@@ -72,37 +72,43 @@ async def create_new_chatroom(
 
 
 async def delete_chatroom(
-    user_id: str,
-    chatroom_id: str,
-    buffer: BufferedUserContext | None = None,
-) -> None:
-    await ChatGptCacheManager.delete_chatroom(user_id=user_id, chatroom_id=chatroom_id)
-    if buffer is not None:
-        index: int | None = buffer.find_index_of_chatroom(chatroom_id=chatroom_id)
-        if index is not None:
-            buffer.delete_context(index=index)
-            if buffer.buffer_size == 0:
-                await create_new_chatroom(
-                    user_id=user_id,
-                    buffer=buffer,
-                )
-            buffer.change_context_to(index=0)
+    chatroom_id_to_delete: str,
+    buffer: BufferedUserContext,
+) -> bool:
+    await ChatGptCacheManager.delete_chatroom(
+        user_id=buffer.user_id, chatroom_id=chatroom_id_to_delete
+    )
+    index: int | None = buffer.find_index_of_chatroom(chatroom_id=chatroom_id_to_delete)
+    if index is None:
+        return False
+    buffer.delete_context(index=index)
+    if buffer.buffer_size == 0:
+        await create_new_chatroom(
+            user_id=buffer.user_id,
+            buffer=buffer,
+        )
+    if buffer.current_chatroom_id == chatroom_id_to_delete:
+        buffer.change_context_to(index=0)
+    return True
 
 
 async def get_contexts_sorted_from_recent_to_past(
-    user_id: str, chatroom_ids: list[str]
+    user_id: int, chatroom_ids: list[int], chatroom_id: int
 ) -> list[UserGptContext]:
+    """
+    Returns a list of contexts sorted from recent to past.
+    :param user_id: user id
+    :param chatroom_ids: list of chatroom ids
+    """
     if len(chatroom_ids) == 0:
         # create new chatroom
-        return [await create_new_chatroom(user_id=user_id)]
+        return [await create_new_chatroom(user_id=user_id, new_chatroom_id=chatroom_id)]
     else:
         # get latest chatroom
         contexts: list[UserGptContext] = await gather(
             *[
-                ChatGptCacheManager.read_context(
-                    user_id=user_id, chatroom_id=chatroom_id
-                )
-                for chatroom_id in chatroom_ids
+                ChatGptCacheManager.read_context(user_id=user_id, chatroom_id=id)
+                for id in chatroom_ids
             ]
         )
         contexts.sort(key=lambda x: x.user_gpt_profile.created_at, reverse=True)
@@ -264,15 +270,24 @@ class ChatGptCommands:  # commands for chat gpt
 
     @staticmethod
     @CommandResponse.do_nothing
-    async def deletechatroom(buffer: BufferedUserContext) -> None:
-        await delete_chatroom(
-            user_id=buffer.user_id,
-            chatroom_id=buffer.current_chatroom_id,
+    async def deletechatroom(chatroom_id: str, buffer: BufferedUserContext) -> None:
+        chatroom_id_before: str = buffer.current_chatroom_id
+        delete_result: bool = await delete_chatroom(
+            chatroom_id_to_delete=chatroom_id,
             buffer=buffer,
         )
-        await SendToWebsocket.initiation_of_chat(
-            websocket=buffer.websocket, buffer=buffer
-        )
+        if buffer.current_chatroom_id == chatroom_id_before:
+            await SendToWebsocket.initiation_of_chat(
+                buffer=buffer,
+                send_previous_chats=False,
+                send_chatroom_ids=delete_result,
+            )
+        else:
+            await SendToWebsocket.initiation_of_chat(
+                buffer=buffer,
+                send_previous_chats=True,
+                send_chatroom_ids=delete_result,
+            )
 
     @staticmethod
     @CommandResponse.send_message_and_stop

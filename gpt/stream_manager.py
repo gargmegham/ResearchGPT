@@ -24,19 +24,25 @@ logger = logging.getLogger(__name__)
 
 async def begin_chat(
     websocket: WebSocket,
-    user_id: str,
+    user_id: int,
+    chatroom_id: int,
 ) -> None:
     # initialize variables
     buffer: BufferedUserContext = BufferedUserContext(
         user_id=user_id,
         websocket=websocket,
-        sorted_ctxts=await get_contexts_sorted_from_recent_to_past(
+        sorted_contexts=await get_contexts_sorted_from_recent_to_past(
             user_id=user_id,
             chatroom_ids=await ChatGptCacheManager.get_all_chatrooms(user_id=user_id),
+            chatroom_id=chatroom_id,
         ),
     )
 
-    await SendToWebsocket.initiation_of_chat(websocket=websocket, buffer=buffer)
+    await SendToWebsocket.initiation_of_chat(
+        buffer=buffer,
+        send_chatroom_ids=True,
+        send_previous_chats=True,
+    )
 
     while True:  # loop until connection is closed
         try:
@@ -56,8 +62,8 @@ async def begin_chat(
                 )
                 continue
             received: MessageFromWebsocket = MessageFromWebsocket(**rcvd)
-
-            if received.chatroom_id != buffer.current_chatroom_id:  # change chat room
+            if received.chatroom_id != buffer.current_chatroom_id:
+                # This is a message from another chat room, interpreted as change of context, while ignoring message
                 index: int | None = buffer.find_index_of_chatroom(received.chatroom_id)
                 if index is None:
                     # if received chatroom_id is not in chatroom_ids, create new chat room
@@ -66,13 +72,20 @@ async def begin_chat(
                         new_chatroom_id=received.chatroom_id,
                         buffer=buffer,
                     )
-                    buffer.change_context_to(index=0)
+                    await SendToWebsocket.initiation_of_chat(
+                        buffer=buffer,
+                        send_previous_chats=False,
+                        send_chatroom_ids=True,
+                    )
                 else:
                     # if received chatroom_id is in chatroom_ids, get context from memory
                     buffer.change_context_to(index=index)
-                await SendToWebsocket.initiation_of_chat(
-                    websocket=websocket, buffer=buffer
-                )
+                    await SendToWebsocket.initiation_of_chat(
+                        buffer=buffer,
+                        send_previous_chats=True,
+                        send_chatroom_ids=False,
+                    )
+                continue
             await HandleMessage.user(
                 msg=received.msg,
                 buffer=buffer,
@@ -80,7 +93,6 @@ async def begin_chat(
             await HandleMessage.gpt(
                 buffer=buffer,
             )
-
         except WebSocketDisconnect:
             raise WebSocketDisconnect(code=1000, reason="client disconnected")
         except (AssertionError, ValidationError):

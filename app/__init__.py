@@ -10,7 +10,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.dependencies import process_pool_executor
 from app.exceptions import Responses_400
 from app.globals import *
-from database import SessionLocal, cache, repository, schemas
+from database import SessionLocal, cache, repository, schemas, models
 from gpt.stream_manager import begin_chat
 from gpt.websocket_manager import SendToWebsocket
 
@@ -121,7 +121,11 @@ def get_user_id_websocket(websocket: WebSocket):
         session = cookies.split("pubtrawlr_session=")[1].split(";")[0]
         if xsrf and session:
             # TODO replace with actual authentication
-            return 25
+            logger.info(
+                f"User authenticated! XSRF-TOKEN={xsrf}; pubtrawlr_session={session};"
+            )
+            pass
+        return 25
     except:
         return None
 
@@ -188,28 +192,28 @@ def get_chatrooms(
     return repository.get_chatrooms(db=db, user_id=user_id)
 
 
-@app.post("/chat-stream/", response_model=schemas.Message)
-def create_message(
-    message: schemas.MessageCreate,
-    request: Request,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    return EventSourceResponse(
-        repository.create_message(request, db=db, message=message, user_id=user_id)
-    )
-
-
-@app.websocket("/chat-socket/")
+@app.websocket("/chat-socket/{chatroom_id}/")
 async def ws_chatgpt(
     websocket: WebSocket,
     user_id: int = Depends(get_user_id_websocket),
+    chatroom_id: int = Path(..., title="The ID of the chatroom to join"),
 ):
     try:
-        await websocket.accept()  # accept websocket
+        db = SessionLocal()
+        if not repository.validate_id(db, chatroom_id, models.ChatRoom):
+            raise ValueError("Chatroom not found!")
+        await websocket.accept()
         await begin_chat(
             websocket=websocket,
-            user_id=str(user_id),
+            user_id=user_id,
+            chatroom_id=chatroom_id,
+        )
+    except ValueError as exception:
+        logger.error(exception, exc_info=True)
+        await SendToWebsocket.message(
+            websocket=websocket,
+            msg=f"Chatroom not found. close the connection. ({exception})",
+            chatroom_id="null",
         )
     except WebSocketDisconnect:
         ...
@@ -220,3 +224,5 @@ async def ws_chatgpt(
             msg=f"An unknown error has occurred. close the connection. ({exception})",
             chatroom_id="null",
         )
+    finally:
+        db.close()

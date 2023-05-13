@@ -29,19 +29,21 @@ from gpt.models import (
 class SendToWebsocket:
     @staticmethod
     async def initiation_of_chat(
-        websocket: WebSocket,
         buffer: BufferedUserContext,
+        send_chatroom_ids: bool = True,
+        send_previous_chats: bool = True,
     ) -> None:
+        """Send initial message to websocket, providing current state of user"""
         previous_chats = message_history_organizer(
             user_gpt_context=buffer.current_user_gpt_context,
             send_to_stream=False,
         )
         assert isinstance(previous_chats, list)
         await SendToWebsocket.message(
-            websocket=websocket,
+            websocket=buffer.websocket,
             msg=InitMessage(
-                chatroom_ids=buffer.sorted_chatroom_ids,
-                previous_chats=previous_chats,
+                chatroom_ids=buffer.sorted_chatroom_ids if send_chatroom_ids else None,
+                previous_chats=previous_chats if send_previous_chats else None,
             ).json(),
             chatroom_id=buffer.current_chatroom_id,
             init=True,
@@ -51,12 +53,16 @@ class SendToWebsocket:
     async def message(
         websocket: WebSocket,
         msg: str,
-        chatroom_id: str,
+        chatroom_id: int,
         finish: bool = True,
         is_user: bool = False,
         init: bool = False,
-    ) -> None:  # send whole message to websocket
-        await websocket.send_json(  # send stream message
+    ) -> None:
+        """
+        send whole message to websocket
+        """
+        # send stream message to websocket
+        await websocket.send_json(
             MessageToWebsocket(
                 msg=msg,
                 finish=finish,
@@ -70,12 +76,13 @@ class SendToWebsocket:
     async def stream(
         websocket: WebSocket,
         stream: AsyncGenerator | Generator | AsyncIterator | Iterator,
-        chatroom_id: str,
+        chatroom_id: int,
         finish: bool = True,
         is_user: bool = False,
         chunk_size: int = 3,
         model_name: str | None = None,
-    ) -> str:  # send whole stream to websocket
+    ) -> str:
+        """send whole stream to websocket"""
         final_response, stream_buffer = "", ""
         iteration: int = 0
         await websocket.send_json(
@@ -88,7 +95,8 @@ class SendToWebsocket:
             ).dict()
         )
         if isinstance(stream, (Generator, Iterator)):
-            for delta in stream:  # stream from local
+            for delta in stream:
+                # stream from local
                 stream_buffer += delta
                 iteration += 1
                 if iteration % chunk_size == 0:

@@ -178,6 +178,15 @@ class LLMModels(Enum):  # gpt models for openai api
         model_path="./llama_models/ggml/WizardLM-7B-uncensored.ggml.q4_2.bin",
         description="""The following is a conversation between a {user} and an {gpt}. The {gpt} is talkative and provides lots of specific details from its context. If the {gpt} does not know the answer to a question, it truthfully says it does not know:\n""",
     )
+    gpt4x = LlamaCppModel(
+        name="gpt4-x-vicuna-13B-GGML",
+        max_total_tokens=2048,  # context tokens (n_ctx)
+        max_tokens_per_request=1024,  # The maximum number of tokens to generate.
+        token_margin=8,
+        tokenizer=LlamaTokenizer("junelee/wizard-vicuna-13b"),
+        model_path="./llama_models/ggml/gpt4-x-vicuna-13B.ggml.q4_0.bin",
+        description="""The following is a conversation between a {user} and an {gpt}. The {gpt} is talkative and provides lots of specific details from its context. If the {gpt} does not know the answer to a question, it truthfully says it does not know:\n""",
+    )
 
 
 class GptRoles(str, Enum):
@@ -248,8 +257,8 @@ class MessageHistory:  # message history for user and gpt
 
 @dataclass
 class UserGptProfile:  # user gpt profile for user and gpt
-    user_id: str
-    chatroom_id: str = field(default_factory=lambda: uuid4().hex)
+    user_id: int
+    chatroom_id: int = field(default_factory=lambda: uuid4().hex)
     created_at: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
     user_role: str = field(default=GptRoles.USER.value)
     gpt_role: str = field(default=GptRoles.GPT.value)
@@ -261,7 +270,11 @@ class UserGptProfile:  # user gpt profile for user and gpt
 
 
 @dataclass
-class UserGptContext:  # user gpt context for user and gpt
+class UserGptContext:
+    """
+    user gpt context for user and gpt
+    """
+
     user_gpt_profile: UserGptProfile
     gpt_model: LLMModels
     user_message_histories: list[MessageHistory] = field(default_factory=list)
@@ -389,8 +402,8 @@ class UserGptContext:  # user gpt context for user and gpt
     @classmethod
     def construct_default(
         cls,
-        user_id: str,
-        chatroom_id: str,
+        user_id: int,
+        chatroom_id: int,
         gpt_model: LLMModels = LLMModels.gpt_3_5_turbo,
     ):
         return cls(
@@ -410,12 +423,12 @@ class UserGptContext:  # user gpt context for user and gpt
         for k, v in user_gpt_context.__dict__.items():
             setattr(self, k, v)
 
-    def ensure_token_not_exceed(self) -> int:
+    def ensure_token_not_exceed(self, extra_token_margin: int = 0) -> int:
         deleted_histories: int = 0
         while (
             len(self.user_message_histories) > 0
             and len(self.gpt_message_histories) > 0
-            and self.left_tokens < 0
+            and self.left_tokens < extra_token_margin
         ):
             deleted_histories += 1
             self.user_message_tokens -= self.user_message_histories.pop(0).tokens
@@ -438,18 +451,18 @@ class UserGptContext:  # user gpt context for user and gpt
 
 class MessageFromWebsocket(BaseModel):
     msg: str
-    chatroom_id: str
+    chatroom_id: int
 
 
 class InitMessage(BaseModel):
-    previous_chats: list[dict]
-    chatroom_ids: list[str]
+    previous_chats: list[dict] | None = None
+    chatroom_ids: list[str] | None = None
 
 
 class MessageToWebsocket(BaseModel):
     msg: str | None
     finish: bool
-    chatroom_id: str
+    chatroom_id: int
     is_user: bool
     init: bool = False
     model_name: str | None = None

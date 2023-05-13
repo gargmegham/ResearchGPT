@@ -5,7 +5,7 @@ from fastapi import Request
 from sqlalchemy.orm import Session
 
 from app.globals import STATUS_STREAM_DELAY, STATUS_STREAM_RETRY_TIMEOUT
-from database import models, schemas
+from database import models, schemas, Base
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,17 @@ def create_chatroom(db: Session, chatroom: schemas.ChatRoomCreate, user_id: int)
     db.commit()
     db.refresh(db_chatroom)
     return db_chatroom
+
+
+def validate_id(db: Session, id: int, model: Base) -> bool:
+    return (
+        db.query(model)
+        .filter_by(
+            id=id,
+        )
+        .count()
+        > 0
+    )
 
 
 def update_chatroom(
