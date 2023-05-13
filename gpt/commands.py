@@ -55,14 +55,14 @@ class CommandResponse:
     repeat_command = _wrapper(ResponseType.REPEAT_COMMAND)
 
 
-async def create_new_chat_room(
+async def create_new_chatroom(
     user_id: str,
-    new_chat_room_id: str | None = None,
+    new_chatroom_id: str | None = None,
     buffer: BufferedUserContext | None = None,
 ) -> UserGptContext:
     default: UserGptContext = UserGptContext.construct_default(
         user_id=user_id,
-        chat_room_id=new_chat_room_id if new_chat_room_id else uuid4().hex,
+        chatroom_id=new_chatroom_id if new_chatroom_id else uuid4().hex,
     )
     await ChatGptCacheManager.create_context(user_gpt_context=default)
     if buffer is not None:
@@ -71,20 +71,18 @@ async def create_new_chat_room(
     return default
 
 
-async def delete_chat_room(
+async def delete_chatroom(
     user_id: str,
-    chat_room_id: str,
+    chatroom_id: str,
     buffer: BufferedUserContext | None = None,
 ) -> None:
-    await ChatGptCacheManager.delete_chat_room(
-        user_id=user_id, chat_room_id=chat_room_id
-    )
+    await ChatGptCacheManager.delete_chatroom(user_id=user_id, chatroom_id=chatroom_id)
     if buffer is not None:
-        index: int | None = buffer.find_index_of_chatroom(chat_room_id=chat_room_id)
+        index: int | None = buffer.find_index_of_chatroom(chatroom_id=chatroom_id)
         if index is not None:
             buffer.delete_context(index=index)
             if buffer.buffer_size == 0:
-                await create_new_chat_room(
+                await create_new_chatroom(
                     user_id=user_id,
                     buffer=buffer,
                 )
@@ -92,19 +90,19 @@ async def delete_chat_room(
 
 
 async def get_contexts_sorted_from_recent_to_past(
-    user_id: str, chat_room_ids: list[str]
+    user_id: str, chatroom_ids: list[str]
 ) -> list[UserGptContext]:
-    if len(chat_room_ids) == 0:
+    if len(chatroom_ids) == 0:
         # create new chatroom
-        return [await create_new_chat_room(user_id=user_id)]
+        return [await create_new_chatroom(user_id=user_id)]
     else:
         # get latest chatroom
         contexts: list[UserGptContext] = await gather(
             *[
                 ChatGptCacheManager.read_context(
-                    user_id=user_id, chat_room_id=chat_room_id
+                    user_id=user_id, chatroom_id=chatroom_id
                 )
-                for chat_room_id in chat_room_ids
+                for chatroom_id in chatroom_ids
             ]
         )
         contexts.sort(key=lambda x: x.user_gpt_profile.created_at, reverse=True)
@@ -187,7 +185,7 @@ class ChatGptCommands:  # commands for chat gpt
             await SendToWebsocket.message(
                 websocket=buffer.websocket,
                 msg="Command name cannot start with '_'",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
             return None, ResponseType.DO_NOTHING
         else:
@@ -209,14 +207,14 @@ class ChatGptCommands:  # commands for chat gpt
             await SendToWebsocket.message(
                 websocket=buffer.websocket,
                 msg="Wrong argument type",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
             return None, ResponseType.DO_NOTHING
         except IndexError:
             await SendToWebsocket.message(
                 websocket=buffer.websocket,
                 msg="Not enough arguments",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
             return None, ResponseType.DO_NOTHING
         else:
@@ -233,7 +231,7 @@ class ChatGptCommands:  # commands for chat gpt
                     await SendToWebsocket.message(
                         websocket=buffer.websocket,
                         msg=callback_response,
-                        chat_room_id=buffer.current_chat_room_id,
+                        chatroom_id=buffer.current_chatroom_id,
                     )
                     return callback_response, (
                         ResponseType.HANDLE_BOTH
@@ -245,7 +243,7 @@ class ChatGptCommands:  # commands for chat gpt
                 await SendToWebsocket.message(
                     websocket=buffer.websocket,
                     msg=callback_response,
-                    chat_room_id=buffer.current_chat_room_id,
+                    chatroom_id=buffer.current_chatroom_id,
                 )
                 return None, ResponseType.DO_NOTHING
 
@@ -267,9 +265,9 @@ class ChatGptCommands:  # commands for chat gpt
     @staticmethod
     @CommandResponse.do_nothing
     async def deletechatroom(buffer: BufferedUserContext) -> None:
-        await delete_chat_room(
+        await delete_chatroom(
             user_id=buffer.user_id,
-            chat_room_id=buffer.current_chat_room_id,
+            chatroom_id=buffer.current_chatroom_id,
             buffer=buffer,
         )
         await SendToWebsocket.initiation_of_chat(
@@ -291,7 +289,7 @@ class ChatGptCommands:  # commands for chat gpt
             setattr(user_gpt_context, f"{role.name.lower()}_message_tokens", 0)
             await ChatGptCacheManager.delete_message_history(
                 user_id=user_gpt_context.user_id,
-                chat_room_id=user_gpt_context.chat_room_id,
+                chatroom_id=user_gpt_context.chatroom_id,
                 role=role,
             )
         response: str = f"""## Total Token Removed: **{n_user_tokens + n_gpt_tokens + n_system_tokens}**
@@ -317,7 +315,7 @@ class ChatGptCommands:  # commands for chat gpt
         user_gpt_context.reset()
         if await ChatGptCacheManager.reset_context(
             user_id=user_gpt_context.user_id,
-            chat_room_id=user_gpt_context.chat_room_id,
+            chatroom_id=user_gpt_context.chatroom_id,
         ):  # if reset success
             return "Context reset success"
         else:
@@ -494,7 +492,7 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
         await SendToWebsocket.message(
             websocket=websocket,
             msg=msg,
-            chat_room_id=user_gpt_context.chat_room_id,
+            chatroom_id=user_gpt_context.chatroom_id,
         )
 
     @staticmethod
@@ -547,7 +545,7 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
         await SendToWebsocket.message(
             websocket=buffer.websocket,
             msg=f"Current Chaining: {chain_size}",
-            chat_room_id=buffer.current_chat_room_id,
+            chatroom_id=buffer.current_chatroom_id,
         )
         return f"/testchaining {chain_size-1}", ResponseType.REPEAT_COMMAND
 
@@ -573,7 +571,7 @@ And below text, enclosed in triple backticked, is everything I could find in my 
             await SendToWebsocket.message(
                 websocket=buffer.websocket,
                 msg="No results found from vectorstore. Just sending your query...",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
         await MessageManager.add_message_history_safely(
             user_gpt_context=buffer.current_user_gpt_context,

@@ -40,10 +40,10 @@ class SendToWebsocket:
         await SendToWebsocket.message(
             websocket=websocket,
             msg=InitMessage(
-                chat_room_ids=buffer.sorted_chat_room_ids,
+                chatroom_ids=buffer.sorted_chatroom_ids,
                 previous_chats=previous_chats,
             ).json(),
-            chat_room_id=buffer.current_chat_room_id,
+            chatroom_id=buffer.current_chatroom_id,
             init=True,
         )
 
@@ -51,7 +51,7 @@ class SendToWebsocket:
     async def message(
         websocket: WebSocket,
         msg: str,
-        chat_room_id: str,
+        chatroom_id: str,
         finish: bool = True,
         is_user: bool = False,
         init: bool = False,
@@ -60,7 +60,7 @@ class SendToWebsocket:
             MessageToWebsocket(
                 msg=msg,
                 finish=finish,
-                chat_room_id=chat_room_id,
+                chatroom_id=chatroom_id,
                 is_user=is_user,
                 init=init,
             ).dict()
@@ -70,7 +70,7 @@ class SendToWebsocket:
     async def stream(
         websocket: WebSocket,
         stream: AsyncGenerator | Generator | AsyncIterator | Iterator,
-        chat_room_id: str,
+        chatroom_id: str,
         finish: bool = True,
         is_user: bool = False,
         chunk_size: int = 3,
@@ -82,7 +82,7 @@ class SendToWebsocket:
             MessageToWebsocket(
                 msg=None,
                 finish=False,
-                chat_room_id=chat_room_id,
+                chatroom_id=chatroom_id,
                 is_user=is_user,
                 model_name=model_name,
             ).dict()
@@ -97,7 +97,7 @@ class SendToWebsocket:
                         MessageToWebsocket(
                             msg=stream_buffer,
                             finish=False,
-                            chat_room_id=chat_room_id,
+                            chatroom_id=chatroom_id,
                             is_user=is_user,
                             model_name=model_name,
                         ).dict()
@@ -113,7 +113,7 @@ class SendToWebsocket:
                         MessageToWebsocket(
                             msg=stream_buffer,
                             finish=False,
-                            chat_room_id=chat_room_id,
+                            chatroom_id=chatroom_id,
                             is_user=is_user,
                             model_name=model_name,
                         ).dict()
@@ -125,7 +125,7 @@ class SendToWebsocket:
             MessageToWebsocket(
                 msg=stream_buffer,
                 finish=True if finish else False,
-                chat_room_id=chat_room_id,
+                chatroom_id=chatroom_id,
                 is_user=is_user,
                 model_name=model_name,
             ).dict()
@@ -160,7 +160,7 @@ class HandleMessage:
             if isinstance(buffer.current_user_gpt_context.gpt_model.value, OpenAIModel):
                 msg: str = await SendToWebsocket.stream(
                     websocket=buffer.websocket,
-                    chat_room_id=buffer.current_chat_room_id,
+                    chatroom_id=buffer.current_chatroom_id,
                     stream=generate_from_openai(
                         user_gpt_context=buffer.current_user_gpt_context
                     ),
@@ -181,7 +181,7 @@ class HandleMessage:
                     msg, _ = await asyncio.gather(
                         SendToWebsocket.stream(
                             websocket=buffer.websocket,
-                            chat_room_id=buffer.current_chat_room_id,
+                            chatroom_id=buffer.current_chatroom_id,
                             finish=True,
                             chunk_size=1,
                             model_name="llama",

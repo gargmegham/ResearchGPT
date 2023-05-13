@@ -218,5 +218,5 @@ async def ws_chatgpt(
         await SendToWebsocket.message(
             websocket=websocket,
             msg=f"An unknown error has occurred. close the connection. ({exception})",
-            chat_room_id="null",
+            chatroom_id="null",
         )

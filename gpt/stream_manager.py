@@ -12,7 +12,7 @@ from app.exceptions import (
 )
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.commands import create_new_chat_room, get_contexts_sorted_from_recent_to_past
+from gpt.commands import create_new_chatroom, get_contexts_sorted_from_recent_to_past
 from gpt.fileloader import read_bytes_to_text
 from gpt.message_manager import MessageManager
 from gpt.models import GptRoles, MessageFromWebsocket, MessageToWebsocket
@@ -32,7 +32,7 @@ async def begin_chat(
         websocket=websocket,
         sorted_ctxts=await get_contexts_sorted_from_recent_to_past(
             user_id=user_id,
-            chat_room_ids=await ChatGptCacheManager.get_all_chat_rooms(user_id=user_id),
+            chatroom_ids=await ChatGptCacheManager.get_all_chatrooms(user_id=user_id),
         ),
     )
 
@@ -52,23 +52,23 @@ async def begin_chat(
                 await SendToWebsocket.message(
                     websocket=websocket,
                     msg=f"Successfully embedded documents. You uploaded file begins with...\n\n```{docs[0][:50]}```...",
-                    chat_room_id=buffer.current_chat_room_id,
+                    chatroom_id=buffer.current_chatroom_id,
                 )
                 continue
             received: MessageFromWebsocket = MessageFromWebsocket(**rcvd)
 
-            if received.chat_room_id != buffer.current_chat_room_id:  # change chat room
-                index: int | None = buffer.find_index_of_chatroom(received.chat_room_id)
+            if received.chatroom_id != buffer.current_chatroom_id:  # change chat room
+                index: int | None = buffer.find_index_of_chatroom(received.chatroom_id)
                 if index is None:
-                    # if received chat_room_id is not in chat_room_ids, create new chat room
-                    await create_new_chat_room(
+                    # if received chatroom_id is not in chatroom_ids, create new chat room
+                    await create_new_chatroom(
                         user_id=user_id,
-                        new_chat_room_id=received.chat_room_id,
+                        new_chatroom_id=received.chatroom_id,
                         buffer=buffer,
                     )
                     buffer.change_context_to(index=0)
                 else:
-                    # if received chat_room_id is in chat_room_ids, get context from memory
+                    # if received chatroom_id is in chatroom_ids, get context from memory
                     buffer.change_context_to(index=index)
                 await SendToWebsocket.initiation_of_chat(
                     websocket=websocket, buffer=buffer
@@ -87,7 +87,7 @@ async def begin_chat(
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg="Invalid message. Message is not in the correct format, maybe frontend - backend version mismatch?",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
             continue
         except ValueError as e:
@@ -95,7 +95,7 @@ async def begin_chat(
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg="Invalid file type.",
-                chat_room_id=buffer.current_chat_room_id,
+                chatroom_id=buffer.current_chatroom_id,
             )
             continue
         except GptTextGenerationException:
@@ -103,7 +103,7 @@ async def begin_chat(
                 SendToWebsocket.message(
                     websocket=websocket,
                     msg="Text generation failure. Please try again.",
-                    chat_room_id=buffer.current_chat_room_id,
+                    chatroom_id=buffer.current_chatroom_id,
                 ),
                 MessageManager.pop_message_history_safely(
                     user_gpt_context=buffer.current_user_gpt_context,
@@ -115,7 +115,7 @@ async def begin_chat(
                 SendToWebsocket.message(
                     websocket=websocket,
                     msg="Something's wrong. Please try again.",
-                    chat_room_id=buffer.current_chat_room_id,
+                    chatroom_id=buffer.current_chatroom_id,
                 ),
                 MessageManager.pop_message_history_safely(
                     user_gpt_context=buffer.current_user_gpt_context,
@@ -134,7 +134,7 @@ async def begin_chat(
                 msg=too_much_token_exception.msg
                 if too_much_token_exception.msg is not None
                 else "",
-                chat_room_id=buffer.current_user_gpt_context.chat_room_id,
+                chatroom_id=buffer.current_user_gpt_context.chatroom_id,
             )  # send too much token exception message to websocket
             continue
         except Exception as exception:  # if other exception is raised
@@ -143,7 +143,7 @@ async def begin_chat(
                 MessageToWebsocket(
                     msg="Internal Server Error",
                     finish=True,
-                    chat_room_id=buffer.current_user_gpt_context.chat_room_id,
+                    chatroom_id=buffer.current_user_gpt_context.chatroom_id,
                     is_user=False,
                 ).dict()
             )
