@@ -80,5 +80,14 @@ USER_CONTEXT_DICT: Dict[str, Union[None, List]] = {}
 """
 SSE variables
 """
-STATUS_STREAM_DELAY = 5
-STATUS_STREAM_RETRY_TIMEOUT = 30000
+STATUS_STREAM_DELAY = 0.25  # seconds
+STATUS_STREAM_RETRY_TIMEOUT = 10  # seconds
+
+"""
+Redis variables
+"""
+REDIS_HOST = config.get("redis", "REDIS_HOST")
+REDIS_PORT = config.get("redis", "REDIS_PORT")
+REDIS_DB = config.get("redis", "REDIS_DB")
+REDIS_USER = config.get("redis", "REDIS_USER")
+REDIS_PASSWORD = config.get("redis", "REDIS_PASSWORD")

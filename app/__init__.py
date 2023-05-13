@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sse_starlette.sse import EventSourceResponse
 
 from app.globals import *
-from database import SessionLocal, repository, schemas
+from database import SessionLocal, cache, repository, schemas
 
 builtins.print = partial(print, flush=True)
 
@@ -33,6 +33,24 @@ app = FastAPI(
     description="ResearchGPT is a tool for researchers to generate ideas and insights.",
     version="0.1.0",
 )
+
+cache.start()
+
+
+@app.on_event("startup")
+async def startup():
+    if cache.redis is None:
+        raise ConnectionError("Redis is not connected yet!")
+    if cache.is_initiated and await cache.redis.ping():
+        logger.critical("Redis CACHE connected!")
+    else:
+        logger.critical("Redis CACHE connection failed!")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await cache.close()
+    logger.critical("DB & CACHE connection closed!")
 
 
 @app.exception_handler(Exception)

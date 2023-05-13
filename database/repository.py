@@ -64,36 +64,31 @@ def get_chatroom(
     return messages[::-1]
 
 
-async def compute_status(message: schemas.MessageCreate):
-    # Do some heavy computation
+async def compute_status(message: schemas.MessageCreate) -> schemas.Message:
+    # collect gpt output
     await asyncio.sleep(STATUS_STREAM_DELAY)
-    return {"some_end_condition": True}
+    return schemas.Message(
+        event="update",
+        retry=STATUS_STREAM_RETRY_TIMEOUT,
+        data="........",
+        typing=False,
+    )
 
 
 async def create_message(
     request: Request, db: Session, message: schemas.MessageCreate, user_id: int
-):
-    previous_status = None
+) -> schemas.Message:
+    typing = None
     while True:
         if await request.is_disconnected():
-            logger.debug("Request disconnected")
             break
-
-        if previous_status and previous_status["some_end_condition"]:
-            logger.debug("Request completed. Disconnecting now")
-            yield {"event": "end", "data": ""}
+        if typing == False:
+            yield schemas.Message(
+                event="end", retry=None, data="", typing=typing
+            ).json()
             break
-
-        current_status = await compute_status(message)
-        if previous_status != current_status:
-            yield {
-                "event": "update",
-                "retry": STATUS_STREAM_RETRY_TIMEOUT,
-                "data": current_status,
-            }
-            previous_status = current_status
-            logger.debug("Current status :%s", current_status)
-        else:
-            logger.debug("No change in status...")
-
+        response = await compute_status(message)
+        if typing != response.typing:
+            yield response.json()
+            typing = response.typing
         await asyncio.sleep(STATUS_STREAM_DELAY)

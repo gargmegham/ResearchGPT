@@ -21,6 +21,8 @@ sqlalchemy = "^2.0.12"
 langchain = "^0.0.161"
 mysql-connector-python = "^8.0.33"
 sse-starlette = "^1.5.0"
+redis = "^4.5.5"
+orjson = "^3.8.12"
 
 
 [build-system]

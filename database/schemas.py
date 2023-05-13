@@ -8,8 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class Message(BaseModel):
-    output: str
+    data: str
     typing: bool = False
+    retry: int = None
+    event: str = "message"
 
 
 class MessageCreate(BaseModel):
