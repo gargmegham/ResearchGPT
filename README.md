@@ -30,7 +30,7 @@ cp config/config.ini.example config/config.ini
 Start the server using bash script
 
 ```
-bash ./app.sh start --host 0.0.0.0 --port 8080
+bash ./app.sh start --host 0.0.0.0 --port 8000
 ```
 
 You should see the below sample stdout
@@ -38,7 +38,7 @@ You should see the below sample stdout
 ```
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ResearchGPT launched
 --------------------------
 ```
@@ -47,4 +47,4 @@ Note that this server is detached from your terminal, you're free to close the t
 
 To stop the server, execute `bash ./app.sh stop`
 
-Now, open web browser and visit http://0.0.0.0:8080. Enjoy
+Now, open web browser and visit http://0.0.0.0:8000. Enjoy

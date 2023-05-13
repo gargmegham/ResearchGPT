@@ -8,7 +8,7 @@ APP_NAME="ResearchGPT-ChatRoom-Server"
 APP_PATH="app:app"
 APP_LOG="$DIR/log/bash.log"
 HOST="0.0.0.0"
-PORT="8080"
+PORT="8000"
 
 COLOR_RED="\x1b[31m"
 RESET="\x1b[0m"
