@@ -32,7 +32,6 @@ from orjson import loads as orjson_loads
 from pydantic import BaseModel, root_validator
 from redis.asyncio import Redis as AsyncRedisType
 
-from app.exceptions import Responses_500
 from app.globals import (
     OPENAI_API_KEY,
     REDIS_DB,
@@ -41,8 +40,9 @@ from app.globals import (
     REDIS_PORT,
     REDIS_USER,
 )
-
-logger = logging.getLogger(__name__)
+from app.logger import api_logger
+from database.dataclasses import Responses_500
+from database.utils import SingletonMetaClass
 
 try:
     from starlette.concurrency import run_in_threadpool
@@ -109,7 +109,7 @@ def _check_redis_module_exist(client: RedisType, modules: List[dict]) -> None:
                 "You must add the RediSearch (>= 2.4) module from Redis Stack. "
                 "Please refer to Redis Stack docs: https://redis.io/docs/stack/"
             )
-            logger.error(error_message)
+            api_logger.error(error_message)
             raise ValueError(error_message)
 
 
@@ -129,7 +129,7 @@ async def _acheck_redis_module_exist(
                 "You must add the RediSearch (>= 2.4) module from Redis Stack. "
                 "Please refer to Redis Stack docs: https://redis.io/docs/stack/"
             )
-            logger.error(error_message)
+            api_logger.error(error_message)
             raise ValueError(error_message)
 
 
@@ -138,9 +138,9 @@ def _check_index_exists(client: RedisType, index_name: str) -> bool:
     try:
         client.ft(index_name).info()
     except:  # noqa: E722
-        logger.info("Index does not exist")
+        api_logger.info("Index does not exist")
         return False
-    logger.info("Index already exists")
+    api_logger.info("Index already exists")
     return True
 
 
@@ -149,9 +149,9 @@ async def _acheck_index_exists(client: AsyncRedisType, index_name: str) -> bool:
     try:
         await client.ft(index_name).info()
     except:  # noqa: E722
-        logger.info("Index does not exist")
+        api_logger.info("Index does not exist")
         return False
-    logger.info("Index already exists")
+    api_logger.info("Index already exists")
     return True
 
 
@@ -531,11 +531,11 @@ class Redis(VectorStore):
             )
             for result in results.docs
         ]
-        logger.info(
+        api_logger.info(
             f"Total docs: {len(docs)}, and all vectors: {[doc[1] for doc in docs]}"
         )
         for doc in docs:
-            logger.info(f"doc: {doc[0].page_content} score: {doc[1]}")
+            api_logger.info(f"doc: {doc[0].page_content} score: {doc[1]}")
 
         return docs
 
@@ -722,7 +722,7 @@ class Redis(VectorStore):
         # Check if index exists
         try:
             client.ft(index_name).dropindex(delete_documents)
-            logger.info("Drop index")
+            api_logger.info("Drop index")
             return True
         except:  # noqa: E722
             # Index not exist
@@ -756,7 +756,7 @@ class Redis(VectorStore):
         # Check if index exists
         try:
             await client.ft(index_name).dropindex(delete_documents)
-            logger.info("Drop index")
+            api_logger.info("Drop index")
             return True
         except:  # noqa: E722
             # Index not exist
@@ -875,15 +875,6 @@ class RedisVectorStoreRetriever(BaseRetriever, BaseModel):
         else:
             raise ValueError(f"search_type of {self.search_type} not allowed.")
         return docs
-
-
-class SingletonMetaClass(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
 
 
 class RedisFactory(metaclass=SingletonMetaClass):

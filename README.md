@@ -27,12 +27,6 @@ Then export to confi.ini file use config.ini.example for reference
 cp config/config.ini.example config/config.ini
 ```
 
-Start the server using bash script
-
-```
-bash ./app.sh start --host 0.0.0.0 --port 8000
-```
-
 You should see the below sample stdout
 
 ```
@@ -44,7 +38,5 @@ ResearchGPT launched
 ```
 
 Note that this server is detached from your terminal, you're free to close the terminal without interrupting the service.
-
-To stop the server, execute `bash ./app.sh stop`
 
 Now, open web browser and visit http://0.0.0.0:8000. Enjoy

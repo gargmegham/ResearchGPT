@@ -3,15 +3,14 @@ from enum import Enum
 from functools import wraps
 from inspect import Parameter, iscoroutinefunction, signature
 from typing import Any, Callable, Tuple
-from uuid import uuid4
 
 from fastapi import WebSocket
 
 from app.exceptions import InternalServerError
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
+from gpt.common import GptRoles, LLMModels, MessageHistory, UserGptContext
 from gpt.message_manager import MessageManager
-from gpt.models import GptRoles, LLMModels, MessageHistory, UserGptContext
 from gpt.vectorstore_manager import Document, VectorStoreManager
 from gpt.websocket_manager import SendToWebsocket
 

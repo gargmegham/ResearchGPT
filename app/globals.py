@@ -1,12 +1,7 @@
-import logging
-import os
 from configparser import RawConfigParser
 from pathlib import Path
-from typing import Dict, List, Union
 
-from config.en import Args
-
-logger = logging.getLogger(__name__)
+from app.config import Args
 
 """
 OpenAI API SECRETS
@@ -20,6 +15,8 @@ config.read(CONFIG_FILE)
 Main Secret Key
 """
 SECRET_KEY = config.get("main", "SECRET_KEY")
+HOST_MAIN = config.get("main", "HOST_MAIN")
+DEBUG_MODE = config.get("main", "DEBUG_MODE")
 
 """
 OpenAI API SECRETS
@@ -47,41 +44,13 @@ PROMPTS_DIR: str = Args.PROMPTS_DIR
 """
 ResearchGPT variables
 """
-DEBUG_KEY: str = Args.DEBUG_KEY
 RESEARCHGPT_WAKING_PATTERN = Args.RESEARCHGPT_WAKING_PATTERN
 RESEARCHGPT_TEXT_COLOR = Args.RESEARCHGPT_TEXT_COLOR
-if DEBUG_KEY in os.environ and str(os.environ[DEBUG_KEY]).lower() in ["1", "true"]:
+if DEBUG_MODE.lower() in ["1", "true"]:
     RESEARCHGPT_DEBUG_MODE = True
 else:
     RESEARCHGPT_DEBUG_MODE: bool = False
 
-
-"""
-other variables
-"""
-PING_HOST = Args.PING_HOST
-
-
-"""
-server message variables
-"""
-UNKNOWN_RUNTIME_ERR_MSG = Args.UNKNOWN_RUNTIME_ERR_MSG
-UNKNOWN_NETWORK_ERR_MSG = Args.UNKNOWN_NETWORK_ERR_MSG
-ENTER_ROOM_MSG = Args.ENTER_ROOM_MSG
-EXIT_ROOM_MSG = Args.EXIT_ROOM_MSG
-EMPTY_INPUT_MSG = Args.EMPTY_INPUT_MSG
-
-
-"""
-fastapi app instance
-"""
-USER_CONTEXT_DICT: Dict[str, Union[None, List]] = {}
-
-"""
-SSE variables
-"""
-STATUS_STREAM_DELAY = 0.25  # seconds
-STATUS_STREAM_RETRY_TIMEOUT = 10  # seconds
 
 """
 Redis variables
@@ -91,3 +60,23 @@ REDIS_PORT = config.get("redis", "REDIS_PORT")
 REDIS_DB = config.get("redis", "REDIS_DB")
 REDIS_USER = config.get("redis", "REDIS_USER")
 REDIS_PASSWORD = config.get("redis", "REDIS_PASSWORD")
+
+
+"""
+Trusted host variables for TrustedHostMiddleware
+Allowed sites variables for CORSMiddleware
+"""
+if DEBUG_MODE.lower() in ["1", "true"]:
+    TRUSTED: list[str] = ["*"]
+    ALLOWED: list[str] = ["*"]
+else:
+    TRUSTED: list[str] = [
+        f"*.{HOST_MAIN}",
+        HOST_MAIN,
+        "localhost",
+    ]
+    ALLOWED: list[str] = [
+        f"*.{HOST_MAIN}",
+        HOST_MAIN,
+        "localhost",
+    ]

@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 
 from sqlalchemy import (
@@ -10,11 +9,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
-from database import Base
-
-logger = logging.getLogger(__name__)
+Base = declarative_base()
 
 
 class ChatRoom(Base):

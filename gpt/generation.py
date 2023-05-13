@@ -15,11 +15,11 @@ from app.exceptions import (
     GptLengthException,
     GptTextGenerationException,
 )
-from gpt.config import ChatGPTConfig
+from app.logger import api_logger
+from database.dataclasses import ChatGPTConfig
+from database.schemas import SendInitToWebsocket, SendToStream
+from gpt.common import GptRoles, UserGptContext
 from gpt.message_manager import MessageManager
-from gpt.models import GptRoles, SendInitToWebsocket, SendToStream, UserGptContext
-
-logger = logging.getLogger(__name__)
 
 
 def message_history_organizer(
@@ -77,7 +77,7 @@ def message_history_organizer(
             elif message_history["role"] == gpt_role:
                 prefix += f"{gpt_role.upper()}: {message_history['content'].strip()}\n"
             else:
-                logger.error(f"Invalid message history: {message_history}")
+                api_logger.error(f"Invalid message history: {message_history}")
                 raise Exception("Invalid message history")
         prefix += f"{gpt_role.upper()}: "
         return prefix
@@ -178,7 +178,7 @@ async def generate_from_openai(
                                     content_buffer += delta_content
                                     yield delta_content
             except GptLengthException:
-                logger.error("token limit exceeded")
+                api_logger.error("token limit exceeded")
                 if is_appending_discontinued_message:
                     await MessageManager.set_message_history_safely(
                         user_gpt_context=user_gpt_context,
@@ -197,18 +197,18 @@ async def generate_from_openai(
                 user_gpt_context.optional_info["is_discontinued"] = True
                 continue
             except GptException as gpt_exception:
-                logger.error(f"gpt exception: {gpt_exception.msg}")
+                api_logger.error(f"gpt exception: {gpt_exception.msg}")
                 await MessageManager.pop_message_history_safely(
                     user_gpt_context=user_gpt_context, role=GptRoles.USER
                 )
                 yield gpt_exception.msg
                 break
             except httpx.TimeoutException:
-                logger.error("gpt timeout exception")
+                api_logger.error("gpt timeout exception")
                 await sleep(ChatGPTConfig.wait_for_reconnect)
                 continue
             except Exception as exception:
-                logger.error(f"unexpected gpt exception: {exception}")
+                api_logger.error(f"unexpected gpt exception: {exception}")
                 await MessageManager.pop_message_history_safely(
                     user_gpt_context=user_gpt_context, role=GptRoles.USER
                 )
@@ -264,7 +264,7 @@ async def generate_from_llama_cpp(
             )
             break
         else:
-            logger.error(f"llama_cpp exception: {generation}")
+            api_logger.error(f"llama_cpp exception: {generation}")
             raise GptTextGenerationException(
                 msg="Unexpected response from llama_cpp"
             )  # raise exception for unexpected response

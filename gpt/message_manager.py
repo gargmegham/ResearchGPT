@@ -1,7 +1,7 @@
 import asyncio
 
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.models import GptRoles, MessageHistory, UserGptContext
+from gpt.common import GptRoles, MessageHistory, UserGptContext
 
 
 class MessageManager:

@@ -1,105 +1,68 @@
-import asyncio
-import logging
+from sqlalchemy.future import select
 
-from fastapi import Request
-from sqlalchemy.orm import Session
-
-from app.globals import STATUS_STREAM_DELAY, STATUS_STREAM_RETRY_TIMEOUT
-from database import models, schemas, Base
-
-logger = logging.getLogger(__name__)
+from database import db, models, schemas
+from database.models import Base
 
 
-def create_chatroom(db: Session, chatroom: schemas.ChatRoomCreate, user_id: int):
-    db_chatroom = models.ChatRoom(user_id=user_id, search=chatroom.search)
-    db.add(db_chatroom)
-    db.commit()
-    db.refresh(db_chatroom)
-    return db_chatroom
+async def create_chatroom(chatroom: schemas.ChatRoomCreate, user_id: int):
+    async with db.session() as transaction:
+        db_chatroom = models.ChatRoom(user_id=user_id, search=chatroom.search)
+        transaction.add(db_chatroom)
+        await transaction.commit()
+        await transaction.refresh(db_chatroom)
+        return db_chatroom
 
 
-def validate_id(db: Session, id: int, model: Base) -> bool:
-    return (
-        db.query(model)
-        .filter_by(
-            id=id,
-        )
-        .count()
-        > 0
-    )
+async def validate_id(id: int, model: Base) -> bool:
+    async with db.session() as transaction:
+        db_instance = await transaction.get(model, id)
+        if db_instance is None:
+            return False
+        return True
 
 
-def update_chatroom(
-    db: Session, chatroom_id: int, chatroom: schemas.ChatRoomUpdate, user_id: int
+async def update_chatroom(
+    chatroom_id: int, chatroom: schemas.ChatRoomUpdate, user_id: int
 ):
-    updated_instances = (
-        db.query(models.ChatRoom)
-        .filter_by(id=chatroom_id, user_id=user_id)
-        .update({models.ChatRoom.title: chatroom.title})
-    )
-    if updated_instances == 0:
-        raise Exception("Chatroom not found")
-    elif updated_instances > 1:
-        raise Exception("More than one chatroom found")
-    db.commit()
+    async with db.session() as transaction:
+        chatroom = await transaction.get(models.ChatRoom, chatroom_id)
+        if chatroom is None:
+            raise Exception("Chatroom not found")
+        chatroom.title = chatroom.title
+        await transaction.commit()
     return None
 
 
-def delete_chatroom(db: Session, chatroom_id: int, user_id: int) -> None:
-    deleted_instances = (
-        db.query(models.ChatRoom).filter_by(id=chatroom_id, user_id=user_id).delete()
-    )
-    if deleted_instances == 0:
-        raise Exception("Chatroom not found")
-    elif deleted_instances > 1:
-        raise Exception("More than one chatroom found")
-    db.commit()
+async def delete_chatroom(chatroom_id: int, user_id: int) -> None:
+    async with db.session() as transaction:
+        chatroom = await transaction.get(models.ChatRoom, chatroom_id)
+        if chatroom is None:
+            raise Exception("Chatroom not found")
+        await transaction.delete(chatroom)
+        await transaction.commit()
     return
 
 
-def get_chatrooms(db: Session, user_id: int) -> list:
-    return db.query(models.ChatRoom).filter_by(user_id=user_id).all()
+async def get_chatrooms(user_id: int) -> list:
+    async with db.session() as transaction:
+        q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
+        result = await transaction.execute(q)
+        return result.scalars().all()
 
 
-def get_chatroom(
-    db: Session, chatroom_id: int, user_id: int, last_message_id: int = -1
-):
-    messages = (
-        db.query(models.ChatRoomMessage)
-        .filter_by(chatroom_id=chatroom_id, user_id=user_id)
-        .order_by(models.ChatRoomMessage.id.desc())
-    )
-    if last_message_id > 0:
-        messages = messages.filter(models.ChatRoomMessage.id > last_message_id)
-    messages = messages.limit(10).all()
-    return messages[::-1]
-
-
-async def compute_status(message: schemas.MessageCreate) -> schemas.Message:
-    # collect gpt output
-    await asyncio.sleep(STATUS_STREAM_DELAY)
-    return schemas.Message(
-        event="update",
-        retry=STATUS_STREAM_RETRY_TIMEOUT,
-        data="........",
-        typing=False,
-    )
-
-
-async def create_message(
-    request: Request, db: Session, message: schemas.MessageCreate, user_id: int
-) -> schemas.Message:
-    typing = None
-    while True:
-        if await request.is_disconnected():
-            break
-        if typing == False:
-            yield schemas.Message(
-                event="end", retry=None, data="", typing=typing
-            ).json()
-            break
-        response = await compute_status(message)
-        if typing != response.typing:
-            yield response.json()
-            typing = response.typing
-        await asyncio.sleep(STATUS_STREAM_DELAY)
+async def get_chatroom(chatroom_id: int, user_id: int, last_message_id: int = -1):
+    async with db.session() as transaction:
+        q = (
+            select(models.ChatRoomMessage)
+            .where(
+                models.ChatRoomMessage.chatroom_id == chatroom_id,
+                models.ChatRoomMessage.user_id == user_id,
+            )
+            .order_by(models.ChatRoomMessage.id.desc())
+        )
+        if last_message_id > 0:
+            q = q.where(models.ChatRoomMessage.id > last_message_id)
+        q = q.limit(10)
+        result = await transaction.execute(q)
+        messages = [message for message in result.scalars().all()]
+        return messages[::-1]

@@ -4,7 +4,7 @@ from orjson import dumps as orjson_dumps
 from orjson import loads as orjson_loads
 
 from database import cache
-from gpt.models import (
+from gpt.common import (
     GptRoles,
     LLMModels,
     MessageHistory,

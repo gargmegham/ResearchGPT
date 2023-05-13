@@ -6,56 +6,9 @@ from uuid import uuid4
 
 from orjson import dumps as orjson_dumps
 from orjson import loads as orjson_loads
-from pydantic.main import BaseModel
 
 from app.globals import OPENAI_API_KEY
 from gpt.tokenizers import BaseTokenizer, LlamaTokenizer, OpenAITokenizer
-
-
-class SendToStream(BaseModel):
-    role: str
-    content: str
-
-    class Config:
-        orm_mode = True
-
-
-class SendInitToWebsocket(BaseModel):
-    content: str
-    tokens: int
-    is_user: bool
-    timestamp: int
-    model_name: str | None = None
-
-    class Config:
-        orm_mode = True
-
-
-class UTC:
-    def __init__(self):
-        self.utc_now = datetime.utcnow()
-
-    @classmethod
-    def now(cls, hour_diff: int = 0) -> datetime:
-        return cls().utc_now + timedelta(hours=hour_diff)
-
-    @classmethod
-    def date(cls, hour_diff: int = 0) -> date:
-        return cls.now(hour_diff=hour_diff).date()
-
-    @classmethod
-    def timestamp(cls, hour_diff: int = 0) -> int:
-        return int(cls.now(hour_diff=hour_diff).strftime("%Y%m%d%H%M%S"))
-
-    @classmethod
-    def timestamp_to_datetime(cls, timestamp: int, hour_diff: int = 0) -> datetime:
-        return datetime.strptime(str(timestamp), "%Y%m%d%H%M%S") + timedelta(
-            hours=hour_diff
-        )
-
-    @classmethod
-    def date_code(cls, hour_diff: int = 0) -> int:
-        return int(cls.date(hour_diff=hour_diff).strftime("%Y%m%d"))
 
 
 @dataclass
@@ -65,6 +18,33 @@ class LLMModel:
     max_tokens_per_request: int
     token_margin: int
     tokenizer: BaseTokenizer
+
+
+@dataclass
+class OpenAIModel(LLMModel):
+    api_url: str = "https://api.openai.com/v1/chat/completions"
+    api_key: str | None = field(repr=False, default=None)
+
+
+@dataclass
+class MessageHistory:  # message history for user and gpt
+    role: str
+    content: str
+    tokens: int
+    is_user: bool
+    timestamp: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
+    uuid: str = field(default_factory=lambda: uuid4().hex)
+    model_name: str | None = None
+
+    def __post_init__(self):
+        self.role = GptRoles.get_value(self.role)
+
+    def __repr__(self) -> str:
+        return f'<{self.role} uuid="{self.uuid}" date="{self.datetime}" tokens="{self.tokens}">{self.content}</>'
+
+    @property
+    def datetime(self) -> datetime:
+        return UTC.timestamp_to_datetime(self.timestamp)
 
 
 @dataclass
@@ -114,10 +94,31 @@ class LlamaCppModel(LLMModel):
             self.description_tokens = self.tokenizer.tokens_of(self.description)
 
 
-@dataclass
-class OpenAIModel(LLMModel):
-    api_url: str = "https://api.openai.com/v1/chat/completions"
-    api_key: str | None = field(repr=False, default=None)
+class UTC:
+    def __init__(self):
+        self.utc_now = datetime.utcnow()
+
+    @classmethod
+    def now(cls, hour_diff: int = 0) -> datetime:
+        return cls().utc_now + timedelta(hours=hour_diff)
+
+    @classmethod
+    def date(cls, hour_diff: int = 0) -> date:
+        return cls.now(hour_diff=hour_diff).date()
+
+    @classmethod
+    def timestamp(cls, hour_diff: int = 0) -> int:
+        return int(cls.now(hour_diff=hour_diff).strftime("%Y%m%d%H%M%S"))
+
+    @classmethod
+    def timestamp_to_datetime(cls, timestamp: int, hour_diff: int = 0) -> datetime:
+        return datetime.strptime(str(timestamp), "%Y%m%d%H%M%S") + timedelta(
+            hours=hour_diff
+        )
+
+    @classmethod
+    def date_code(cls, hour_diff: int = 0) -> int:
+        return int(cls.date(hour_diff=hour_diff).strftime("%Y%m%d"))
 
 
 class LLMModels(Enum):  # gpt models for openai api
@@ -232,27 +233,6 @@ class GptRoles(str, Enum):
             return cls._member_map_[role.upper()]
         else:
             raise ValueError(f"Invalid role: {role}")
-
-
-@dataclass
-class MessageHistory:  # message history for user and gpt
-    role: str
-    content: str
-    tokens: int
-    is_user: bool
-    timestamp: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
-    uuid: str = field(default_factory=lambda: uuid4().hex)
-    model_name: str | None = None
-
-    def __post_init__(self):
-        self.role = GptRoles.get_value(self.role)
-
-    def __repr__(self) -> str:
-        return f'<{self.role} uuid="{self.uuid}" date="{self.datetime}" tokens="{self.tokens}">{self.content}</>'
-
-    @property
-    def datetime(self) -> datetime:
-        return UTC.timestamp_to_datetime(self.timestamp)
 
 
 @dataclass
@@ -447,25 +427,3 @@ class UserGptContext:
             self.user_message_tokens -= self.user_message_histories.pop(0).tokens
             self.gpt_message_tokens -= self.gpt_message_histories.pop(0).tokens
         return deleted_histories
-
-
-class MessageFromWebsocket(BaseModel):
-    msg: str
-    chatroom_id: int
-
-
-class InitMessage(BaseModel):
-    previous_chats: list[dict] | None = None
-    chatroom_ids: list[str] | None = None
-
-
-class MessageToWebsocket(BaseModel):
-    msg: str | None
-    finish: bool
-    chatroom_id: int
-    is_user: bool
-    init: bool = False
-    model_name: str | None = None
-
-    class Config:
-        orm_mode = True

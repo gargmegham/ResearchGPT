@@ -9,7 +9,9 @@ from app.exceptions import (
     GptTextGenerationException,
     GptTooMuchTokenException,
 )
+from database.schemas import InitMessage, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
+from gpt.common import GptRoles, LlamaCppModel, OpenAIModel
 from gpt.generation import (
     generate_from_llama_cpp,
     generate_from_openai,
@@ -17,13 +19,6 @@ from gpt.generation import (
 )
 from gpt.llama_cpp import llama_cpp_generation
 from gpt.message_manager import MessageManager
-from gpt.models import (
-    GptRoles,
-    InitMessage,
-    LlamaCppModel,
-    MessageToWebsocket,
-    OpenAIModel,
-)
 
 
 class SendToWebsocket:

@@ -10,16 +10,16 @@ from app.exceptions import (
     GptTextGenerationException,
     GptTooMuchTokenException,
 )
+from app.logger import api_logger
+from database.schemas import MessageFromWebsocket, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
 from gpt.commands import create_new_chatroom, get_contexts_sorted_from_recent_to_past
+from gpt.common import GptRoles
 from gpt.fileloader import read_bytes_to_text
 from gpt.message_manager import MessageManager
-from gpt.models import GptRoles, MessageFromWebsocket, MessageToWebsocket
 from gpt.vectorstore_manager import VectorStoreManager
 from gpt.websocket_manager import HandleMessage, SendToWebsocket
-
-logger = logging.getLogger(__name__)
 
 
 async def begin_chat(
@@ -101,7 +101,7 @@ async def begin_chat(
             )
             continue
         except ValueError as e:
-            logger.error(e, exc_info=True)
+            api_logger.error(e, exc_info=True)
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg="Invalid file type.",
@@ -148,7 +148,7 @@ async def begin_chat(
             )  # send too much token exception message to websocket
             continue
         except Exception as exception:  # if other exception is raised
-            logger.error(f"chat exception: {exception}", exc_info=True)
+            api_logger.error(f"chat exception: {exception}", exc_info=True)
             await websocket.send_json(  # finish stream message
                 MessageToWebsocket(
                     msg="Internal Server Error",

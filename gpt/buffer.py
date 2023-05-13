@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from gpt.models import UserGptContext
+from gpt.common import UserGptContext
 
 
 @dataclass

@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import Optional
 
 
@@ -42,99 +41,6 @@ class APIException(Exception):
         if ex is not None:  # set exception if exists
             self.ex = ex
         return self
-
-
-@dataclass(frozen=True)
-class Responses_500:
-    """ """
-
-    middleware_exception: APIException = APIException(
-        status_code=500,
-        internal_code=2,
-        detail="Middleware could not be initialized",
-    )
-    websocket_error: APIException = APIException(
-        status_code=500,
-        internal_code=3,
-        msg="Websocket error",
-        detail="Websocket error",
-    )
-    database_not_initialized: APIException = APIException(
-        status_code=500,
-        internal_code=4,
-        msg="Database not initialized",
-        detail="Database not initialized",
-    )
-    cache_not_initialized: APIException = APIException(
-        status_code=500,
-        internal_code=5,
-        msg="Cache not initialized",
-        detail="Cache not initialized",
-    )
-    vectorestore_not_initialized: APIException = APIException(
-        status_code=500,
-        detail="Vector Store not initialized",
-        msg="Vector Store not initialized",
-        internal_code=5,
-    )
-
-
-@dataclass(frozen=True)
-class Responses_400:
-    no_email_or_password: APIException = APIException(
-        status_code=400,
-        internal_code=1,
-        msg="Email and PW must be provided.",
-        detail="Email and PW must be provided.",
-    )
-    email_already_exists: APIException = APIException(
-        status_code=400,
-        internal_code=2,
-        msg="Email already exists.",
-        detail="Email already exists.",
-    )
-    not_supported_feature: APIException = APIException(
-        status_code=400,
-        internal_code=3,
-        msg="Not supported feature.",
-        detail="Not supported feature.",
-    )
-    max_key_count_exceed: APIException = APIException(
-        status_code=400,
-        internal_code=8,
-        msg="Max Key Count Reached",
-        detail="Max Key Count Reached",
-    )
-    max_whitekey_count_exceed: APIException = APIException(
-        status_code=400,
-        internal_code=9,
-        msg="Max Whitelist Count Reached",
-        detail="Max Whitelist Count Reached",
-    )
-    invalid_ip: APIException = APIException(
-        status_code=400,
-        internal_code=10,
-        msg="invalid IP : {ip}",
-        detail="invalid IP : {ip}",
-    )
-    invalid_api_query: APIException = APIException(
-        status_code=400,
-        internal_code=11,
-        msg="Query String Only Accept key and timestamp.",
-        detail="Query String Only Accept key and timestamp.",
-    )
-    kakao_send_failure: APIException = APIException(
-        status_code=400,
-        internal_code=15,
-        msg="Failed to send KAKAO MSG.",
-        detail="Failed to send KAKAO MSG.",
-    )
-    websocket_in_use: APIException = APIException(
-        status_code=400,
-        internal_code=16,
-        msg="Websocket is already in use.",
-        detail="Websocket is already in use.",
-    )
 
 
 class InternalServerError(APIException):
