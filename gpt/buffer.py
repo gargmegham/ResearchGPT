@@ -1,11 +1,14 @@
 from dataclasses import dataclass, field
 
+from fastapi import WebSocket
+
 from gpt.common import UserGptContext
 
 
 @dataclass
 class BufferedUserContext:
     user_id: int
+    websocket: WebSocket | None
     sorted_contexts: list[UserGptContext]
     _current_context: UserGptContext = field(init=False)
 

@@ -27,7 +27,7 @@ class OpenAIModel(LLMModel):
 
 
 @dataclass
-class MessageHistory:  # message history for user and gpt
+class MessageHistory:
     role: str
     content: str
     tokens: int
@@ -140,7 +140,6 @@ class LLMModels(Enum):  # gpt models for openai api
         api_url="https://whocars123-oai-proxy.hf.space/proxy/openai/v1/chat/completions",
         api_key="SOME_API_KEY",
     )
-
     gpt_4 = OpenAIModel(
         name="gpt-4",
         max_total_tokens=8192,
@@ -150,7 +149,6 @@ class LLMModels(Enum):  # gpt models for openai api
         api_url="https://api.openai.com/v1/chat/completions",
         api_key=OPENAI_API_KEY,
     )
-
     gpt_4_proxy = OpenAIModel(
         name="gpt-4",
         max_total_tokens=8192,
@@ -160,7 +158,6 @@ class LLMModels(Enum):  # gpt models for openai api
         api_url="https://whocars123-oai-proxy.hf.space/proxy/openai/v1/chat/completions",
         api_key="SOME_API_KEY",
     )
-
     vicuna = LlamaCppModel(
         name="wizard-vicuna-13B-ggml-q5-1",
         max_total_tokens=2048,  # context tokens (n_ctx)
@@ -238,7 +235,7 @@ class GptRoles(str, Enum):
 @dataclass
 class UserGptProfile:  # user gpt profile for user and gpt
     user_id: int
-    chatroom_id: int = field(default_factory=lambda: uuid4().hex)
+    chatroom_id: int
     created_at: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
     user_role: str = field(default=GptRoles.USER.value)
     gpt_role: str = field(default=GptRoles.GPT.value)
@@ -257,9 +254,11 @@ class UserGptContext:
 
     user_gpt_profile: UserGptProfile
     gpt_model: LLMModels
+    # message histories
     user_message_histories: list[MessageHistory] = field(default_factory=list)
     gpt_message_histories: list[MessageHistory] = field(default_factory=list)
     system_message_histories: list[MessageHistory] = field(default_factory=list)
+    # message tokens
     user_message_tokens: int = field(init=False, default=0)
     gpt_message_tokens: int = field(init=False, default=0)
     system_message_tokens: int = field(init=False, default=0)

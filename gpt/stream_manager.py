@@ -1,5 +1,4 @@
 import asyncio
-import logging
 
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.concurrency import run_in_threadpool
@@ -14,7 +13,7 @@ from app.logger import api_logger
 from database.schemas import MessageFromWebsocket, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.commands import create_new_chatroom, get_contexts_sorted_from_recent_to_past
+from gpt.commands import command_handler, get_contexts_sorted_from_recent_to_past
 from gpt.common import GptRoles
 from gpt.fileloader import read_bytes_to_text
 from gpt.message_manager import MessageManager
@@ -41,7 +40,8 @@ async def begin_chat(
         send_previous_chats=True,
     )
 
-    while True:  # loop until connection is closed
+    # loop until connection is closed
+    while True:
         try:
             rcvd: dict = await websocket.receive_json()
             assert isinstance(rcvd, dict)
@@ -60,19 +60,12 @@ async def begin_chat(
                 continue
             received: MessageFromWebsocket = MessageFromWebsocket(**rcvd)
             if received.chatroom_id != buffer.current_chatroom_id:
-                # This is a message from another chat room, interpreted as change of context, while ignoring message
+                # This is a message from another chatroom, interpreted as change of context, while ignoring message
                 index: int | None = buffer.find_index_of_chatroom(received.chatroom_id)
                 if index is None:
-                    # if received chatroom_id is not in chatroom_ids, create new chat room
-                    await create_new_chatroom(
-                        user_id=user_id,
-                        new_chatroom_id=received.chatroom_id,
-                        buffer=buffer,
-                    )
-                    await SendToWebsocket.initiation_of_chat(
-                        buffer=buffer,
-                        send_previous_chats=False,
-                        send_chatroom_ids=True,
+                    # if received chatroom_id is not in chatroom_ids
+                    raise Exception(
+                        f"Received chatroom_id {received.chatroom_id} is not in chatroom_ids {buffer.sorted_chatroom_ids}"
                     )
                 else:
                     # if received chatroom_id is in chatroom_ids, get context from memory
@@ -83,6 +76,16 @@ async def begin_chat(
                         send_chatroom_ids=False,
                     )
                 continue
+            if received.msg.startswith("/"):
+                splitted: list[str] = received.msg[1:].split(" ")
+                await command_handler(
+                    callback_name=splitted[0],
+                    callback_args=splitted[1:],
+                    received=received,
+                    websocket=websocket,
+                    buffer=buffer,
+                )
+                continue
             await HandleMessage.user(
                 msg=received.msg,
                 buffer=buffer,
@@ -91,8 +94,10 @@ async def begin_chat(
                 buffer=buffer,
             )
         except WebSocketDisconnect:
+            # if websocket is disconnected, remove user from chatroom
             raise WebSocketDisconnect(code=1000, reason="client disconnected")
         except (AssertionError, ValidationError):
+            # if message is not in the correct format, send error message to websocket and continue to next loop
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg="Invalid message. Message is not in the correct format, maybe frontend - backend version mismatch?",
@@ -100,6 +105,7 @@ async def begin_chat(
             )
             continue
         except ValueError as e:
+            # if file type is not supported, send error message to websocket and continue to next loop
             api_logger.error(e, exc_info=True)
             await SendToWebsocket.message(
                 websocket=websocket,
@@ -108,6 +114,7 @@ async def begin_chat(
             )
             continue
         except GptTextGenerationException:
+            # if text generation fails, send error message to websocket and remove message history
             await asyncio.gather(
                 SendToWebsocket.message(
                     websocket=websocket,
@@ -120,6 +127,7 @@ async def begin_chat(
                 ),
             )
         except GptOtherException:
+            # if other exception occurs, send error message to websocket and remove message history
             await asyncio.gather(
                 SendToWebsocket.message(
                     websocket=websocket,
@@ -135,9 +143,8 @@ async def begin_chat(
                     role=GptRoles.GPT,
                 ),
             )
-        except (
-            GptTooMuchTokenException
-        ) as too_much_token_exception:  # if user message is too long
+        except GptTooMuchTokenException as too_much_token_exception:
+            # if user message is too long, send error message to websocket and continue to next loop
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg=too_much_token_exception.msg
@@ -146,7 +153,8 @@ async def begin_chat(
                 chatroom_id=buffer.current_user_gpt_context.chatroom_id,
             )  # send too much token exception message to websocket
             continue
-        except Exception as exception:  # if other exception is raised
+        except Exception as exception:
+            # if other exception is raised (e.g. internal server error), log exception and send error message to websocket
             api_logger.error(f"chat exception: {exception}", exc_info=True)
             await websocket.send_json(  # finish stream message
                 MessageToWebsocket(

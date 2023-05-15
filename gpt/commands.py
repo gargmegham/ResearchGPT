@@ -7,15 +7,63 @@ from typing import Any, Callable, Tuple
 from fastapi import WebSocket
 
 from app.exceptions import InternalServerError
+from database.schemas import MessageFromWebsocket
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.common import GptRoles, LLMModels, MessageHistory, UserGptContext
+from gpt.common import GptRoles, UserGptContext
 from gpt.message_manager import MessageManager
 from gpt.vectorstore_manager import Document, VectorStoreManager
-from gpt.websocket_manager import SendToWebsocket
+from gpt.websocket_manager import HandleMessage, SendToWebsocket
+
+
+async def create_new_chatroom(
+    user_id: int,
+    new_chatroom_id: int,
+) -> UserGptContext:
+    default: UserGptContext = UserGptContext.construct_default(
+        user_id=user_id,
+        chatroom_id=new_chatroom_id,
+    )
+    await ChatGptCacheManager.create_context(user_gpt_context=default)
+    return default
+
+
+async def delete_old_chatroom(
+    chatroom_id_to_delete: int,
+    user_id: int,
+) -> bool | None:
+    await ChatGptCacheManager.delete_chatroom(
+        user_id=user_id, chatroom_id=chatroom_id_to_delete
+    )
+
+
+async def get_contexts_sorted_from_recent_to_past(
+    user_id: int, chatroom_ids: list[int]
+) -> list[UserGptContext]:
+    """
+    Returns a list of contexts sorted from recent to past.
+    :param user_id: user id
+    :param chatroom_ids: list of chatroom ids
+    """
+    if len(chatroom_ids) == 0:
+        raise Exception("chatroom_ids is empty")
+    else:
+        # get latest chatroom
+        contexts: list[UserGptContext] = await gather(
+            *[
+                ChatGptCacheManager.read_context(user_id=user_id, chatroom_id=id)
+                for id in chatroom_ids
+            ]
+        )
+        contexts.sort(key=lambda x: x.user_gpt_profile.created_at, reverse=True)
+        return contexts
 
 
 class ResponseType(str, Enum):
+    """
+    Enum to handle command responses
+    """
+
     SEND_MESSAGE_AND_STOP = "send_message_and_stop"
     SEND_MESSAGE_AND_KEEP_GOING = "send_message_and_keep_going"
     HANDLE_USER = "handle_user"
@@ -26,6 +74,10 @@ class ResponseType(str, Enum):
 
 
 class CommandResponse:
+    """
+    Class to handle command responses
+    """
+
     @staticmethod
     def _wrapper(enum_type: ResponseType) -> Callable:
         def decorator(func: Callable) -> Callable:
@@ -54,64 +106,55 @@ class CommandResponse:
     repeat_command = _wrapper(ResponseType.REPEAT_COMMAND)
 
 
-async def create_new_chatroom(
-    user_id: int,
-    new_chatroom_id: int,
-    buffer: BufferedUserContext | None = None,
-) -> UserGptContext:
-    default: UserGptContext = UserGptContext.construct_default(
-        user_id=user_id,
-        chatroom_id=new_chatroom_id,
-    )
-    await ChatGptCacheManager.create_context(user_gpt_context=default)
-    if buffer is not None:
-        buffer.insert_context(user_gpt_context=default)
-        buffer.change_context_to(index=0)
-    return default
-
-
-async def delete_chatroom(
-    chatroom_id_to_delete: str,
+async def command_handler(
+    callback_name: str,
+    callback_args: list[str],
+    received: MessageFromWebsocket,
+    websocket: WebSocket,
     buffer: BufferedUserContext,
-) -> bool:
-    await ChatGptCacheManager.delete_chatroom(
-        user_id=buffer.user_id, chatroom_id=chatroom_id_to_delete
+):
+    callback_response, response_type = await ChatGptCommands._get_command_response(
+        callback_name=callback_name,
+        callback_args=callback_args,
+        buffer=buffer,
     )
-    index: int | None = buffer.find_index_of_chatroom(chatroom_id=chatroom_id_to_delete)
-    if index is None:
-        return False
-    buffer.delete_context(index=index)
-    if buffer.buffer_size == 0:
-        await create_new_chatroom(
-            user_id=buffer.user_id,
+    if response_type is ResponseType.DO_NOTHING:
+        return
+    elif response_type is ResponseType.HANDLE_GPT:
+        await HandleMessage.gpt(
+            translate=received.translate,
             buffer=buffer,
         )
-    if buffer.current_chatroom_id == chatroom_id_to_delete:
-        buffer.change_context_to(index=0)
-    return True
-
-
-async def get_contexts_sorted_from_recent_to_past(
-    user_id: int, chatroom_ids: list[int]
-) -> list[UserGptContext]:
-    """
-    Returns a list of contexts sorted from recent to past.
-    :param user_id: user id
-    :param chatroom_ids: list of chatroom ids
-    """
-    if len(chatroom_ids) == 0:
-        # create new chatroom
-        return [await create_new_chatroom(user_id=user_id)]
-    else:
-        # get latest chatroom
-        contexts: list[UserGptContext] = await gather(
-            *[
-                ChatGptCacheManager.read_context(user_id=user_id, chatroom_id=id)
-                for id in chatroom_ids
-            ]
+        return
+    elif response_type is ResponseType.HANDLE_USER:
+        await HandleMessage.user(
+            msg=callback_response,
+            translate=received.translate,
+            buffer=buffer,
         )
-        contexts.sort(key=lambda x: x.user_gpt_profile.created_at, reverse=True)
-        return contexts
+        return
+    elif response_type is ResponseType.HANDLE_BOTH:
+        await HandleMessage.user(
+            msg=callback_response,
+            translate=received.translate,
+            buffer=buffer,
+        )
+        await HandleMessage.gpt(
+            translate=received.translate,
+            buffer=buffer,
+        )
+        return
+    elif response_type is ResponseType.REPEAT_COMMAND:
+        splitted: list[str] = callback_response.split(" ")
+        await command_handler(
+            callback_name=splitted[0][1:]
+            if splitted[0].startswith("/")
+            else splitted[0],
+            callback_args=splitted[1:],
+            received=received,
+            websocket=websocket,
+            buffer=buffer,
+        )
 
 
 def arguments_provider(
@@ -122,7 +165,6 @@ def arguments_provider(
 ) -> tuple[list[Any], dict[str, Any]]:
     args_to_pass: list[Any] = []
     kwargs_to_pass: dict[str, Any] = {}
-
     for param in signature(func).parameters.values():
         if param.kind == Parameter.VAR_POSITIONAL:
             args_to_pass.extend(available_args)
@@ -177,7 +219,11 @@ def arguments_provider(
     return args_to_pass, kwargs_to_pass
 
 
-class ChatGptCommands:  # commands for chat gpt
+class ChatGptCommands:
+    """
+    Class for all commands that can be used in chat
+    """
+
     @classmethod
     async def _get_command_response(
         cls,
@@ -268,27 +314,6 @@ class ChatGptCommands:  # commands for chat gpt
         return "\n\n".join([doc for doc in docs if doc is not None])
 
     @staticmethod
-    @CommandResponse.do_nothing
-    async def deletechatroom(chatroom_id: str, buffer: BufferedUserContext) -> None:
-        chatroom_id_before: str = buffer.current_chatroom_id
-        delete_result: bool = await delete_chatroom(
-            chatroom_id_to_delete=chatroom_id,
-            buffer=buffer,
-        )
-        if buffer.current_chatroom_id == chatroom_id_before:
-            await SendToWebsocket.initiation_of_chat(
-                buffer=buffer,
-                send_previous_chats=False,
-                send_chatroom_ids=delete_result,
-            )
-        else:
-            await SendToWebsocket.initiation_of_chat(
-                buffer=buffer,
-                send_previous_chats=True,
-                send_chatroom_ids=delete_result,
-            )
-
-    @staticmethod
     @CommandResponse.send_message_and_stop
     async def clear(
         user_gpt_context: UserGptContext,
@@ -314,118 +339,18 @@ class ChatGptCommands:  # commands for chat gpt
 
     @staticmethod
     @CommandResponse.send_message_and_stop
-    def test(
-        user_gpt_context: UserGptContext,
-    ) -> str:  # test command showing user_gpt_context
-        """Test command showing user_gpt_context\n
-        /test"""
-        return str(user_gpt_context)
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def reset(user_gpt_context: UserGptContext) -> str:  # reset user_gpt_context
-        """Reset user_gpt_context\n
-        /reset"""
+    async def reset(user_gpt_context: UserGptContext) -> str:
+        """
+        Reset user_gpt_context\n
+        """
         user_gpt_context.reset()
         if await ChatGptCacheManager.reset_context(
             user_id=user_gpt_context.user_id,
             chatroom_id=user_gpt_context.chatroom_id,
-        ):  # if reset success
+        ):
             return "Context reset success"
         else:
             return "Context reset failed"
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def system(
-        system_message: str, /, user_gpt_context: UserGptContext
-    ) -> str:  # add system message
-        """Add system message\n
-        /system <system_message>"""
-        await MessageManager.add_message_history_safely(
-            user_gpt_context=user_gpt_context,
-            content=system_message,
-            role=user_gpt_context.user_gpt_profile.system_role,
-        )
-        return f"Added system message: {system_message}"  # return success message
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def settemperature(
-        temp_to_change: float, user_gpt_context: UserGptContext
-    ) -> str:  # set temperature of gpt
-        """Set temperature of gpt\n
-        /settemperature <temp_to_change>"""
-        try:
-            assert 0 <= temp_to_change <= 1  # assert temperature is between 0 and 1
-        except AssertionError:  # if temperature is not between 0 and 1
-            return "Temperature must be between 0 and 1"
-        else:
-            previous_temperature: str = str(
-                user_gpt_context.user_gpt_profile.temperature
-            )
-            user_gpt_context.user_gpt_profile.temperature = temp_to_change
-            await ChatGptCacheManager.update_profile_and_model(
-                user_gpt_context
-            )  # update user_gpt_context
-            return f"I've changed temperature from {previous_temperature} to {temp_to_change}."  # return success message
-
-    @classmethod
-    async def temp(
-        cls, temp_to_change: float, user_gpt_context: UserGptContext
-    ) -> str:  # alias for settemperature
-        """Alias for settemperature\n
-        /temp <temp_to_change>"""
-        return await cls.settemperature(temp_to_change, user_gpt_context)
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def settopp(
-        top_p_to_change: float, user_gpt_context: UserGptContext
-    ) -> str:  # set top_p of gpt
-        """Set top_p of gpt\n
-        /settopp <top_p_to_change>"""
-        try:
-            assert 0 <= top_p_to_change <= 1  # assert top_p is between 0 and 1
-        except AssertionError:  # if top_p is not between 0 and 1
-            return "Top_p must be between 0 and 1."  # return fail message
-        else:
-            previous_top_p: str = str(user_gpt_context.user_gpt_profile.top_p)
-            user_gpt_context.user_gpt_profile.top_p = top_p_to_change  # set top_p
-            await ChatGptCacheManager.update_profile_and_model(
-                user_gpt_context
-            )  # update user_gpt_context
-            return f"I've changed top_p from {previous_top_p} to {top_p_to_change}."  # return success message
-
-    @classmethod
-    async def topp(
-        cls, top_p_to_change: float, user_gpt_context: UserGptContext
-    ) -> str:  # alias for settopp
-        """Alias for settopp\n
-        /topp <top_p_to_change>"""
-        return await cls.settopp(top_p_to_change, user_gpt_context)
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def poplastmessage(role: str, user_gpt_context: UserGptContext) -> str:
-        """Pop last message (user or system or gpt)\n
-        /poplastmessage <user|system|gpt>"""
-        if role.upper() not in GptRoles._member_names_:
-            return "Role must be one of user, system, gpt"  # return fail message
-        last_message_history: MessageHistory | None = (
-            await MessageManager.pop_message_history_safely(
-                user_gpt_context=user_gpt_context, role=role
-            )
-        )  # pop last message history
-        if last_message_history is None:  # if last_message_history is None
-            return f"There is no {role} message to pop."  # return fail message
-        return f"Pop {role} message: {last_message_history.content}"  # return success message
-
-    @classmethod
-    async def pop(cls, role: str, user_gpt_context: UserGptContext) -> str:
-        """Alias for poplastmessage\n
-        /pop"""
-        return await cls.poplastmessage(role, user_gpt_context)
 
     @staticmethod
     async def retry(
@@ -442,13 +367,6 @@ class ChatGptCommands:  # commands for chat gpt
             user_gpt_context=user_gpt_context, role=GptRoles.GPT
         )
         return None, ResponseType.HANDLE_GPT
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    def ping() -> str:
-        """Ping! Pong!\n
-        /ping"""
-        return "pong"
 
     @staticmethod
     @CommandResponse.send_message_and_stop
@@ -491,77 +409,10 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
 
     @staticmethod
     @CommandResponse.send_message_and_stop
-    def echo(msg: str, /) -> str:
-        """Echo your message\n
-        /echo <msg>"""
-        return msg
-
-    @staticmethod
-    @CommandResponse.do_nothing
-    async def sendtowebsocket(
-        msg: str, /, websocket: WebSocket, user_gpt_context: UserGptContext
-    ) -> None:
-        """Send all messages to websocket\n
-        /sendtowebsocket"""
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg=msg,
-            chatroom_id=user_gpt_context.chatroom_id,
-        )
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
     def codeblock(language, codes: str, /) -> str:
         """Send codeblock\n
         /codeblock <language> <codes>"""
         return f"```{language.lower()}\n" + codes + "\n```"
-
-    @classmethod
-    async def model(cls, model: str, user_gpt_context: UserGptContext) -> str:
-        """Alias for changemodel\n
-        /model <model>"""
-        return await cls.changemodel(model, user_gpt_context)
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    async def changemodel(model: str, user_gpt_context: UserGptContext) -> str:
-        """Change GPT model\n
-        /changemodel <model>"""
-        if model not in LLMModels._member_names_:
-            return f"Model must be one of {', '.join(LLMModels._member_names_)}"
-        llm_model: LLMModels = LLMModels._member_map_[model]  # type: ignore
-        user_gpt_context.gpt_model = llm_model
-        await ChatGptCacheManager.update_profile_and_model(user_gpt_context)
-        return f"Model changed to {model}. Actual model: {llm_model.value.name}"
-
-    @staticmethod
-    @CommandResponse.send_message_and_stop
-    def addoptionalinfo(key: str, value: str, user_gpt_context: UserGptContext) -> str:
-        """Add optional info to buffer\n
-        /addoptionalinfo <key> <value>"""
-        user_gpt_context.optional_info[key] = " ".join(value)
-        return f"I've added {key}={value} to your optional info."
-
-    @classmethod
-    def info(cls, key: str, value: str, user_gpt_context: UserGptContext) -> str:
-        """Alias for addoptionalinfo\n
-        /info <key> <value>"""
-        return cls.addoptionalinfo(key, value, user_gpt_context=user_gpt_context)
-
-    @staticmethod
-    async def testchaining(
-        chain_size: int, buffer: BufferedUserContext
-    ) -> Tuple[str, ResponseType]:
-        """Test chains of commands\n
-        /testchaining <size_of_chain>"""
-        if chain_size <= 0:
-            return "Chaining Complete!", ResponseType.SEND_MESSAGE_AND_STOP
-        await SendToWebsocket.message(
-            websocket=buffer.websocket,
-            msg=f"Current Chaining: {chain_size}",
-            chatroom_id=buffer.current_chatroom_id,
-        )
-        return f"/testchaining {chain_size-1}", ResponseType.REPEAT_COMMAND
 
     @staticmethod
     @CommandResponse.handle_gpt

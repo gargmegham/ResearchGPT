@@ -25,8 +25,12 @@ class MessageFromWebsocket(BaseModel):
 
 
 class InitMessage(BaseModel):
+    """
+    message to send to websocket on init
+    """
+
     previous_chats: list[dict] | None = None
-    chatroom_ids: list[str] | None = None
+    chatroom_ids: list[int] | None = None
 
 
 class MessageToWebsocket(BaseModel):

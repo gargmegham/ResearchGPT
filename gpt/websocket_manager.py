@@ -11,7 +11,7 @@ from app.exceptions import (
 )
 from database.schemas import InitMessage, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
-from gpt.common import GptRoles, LlamaCppModel, OpenAIModel
+from gpt.common import GptRoles, LlamaCppModel, LLMModel, OpenAIModel
 from gpt.generation import (
     generate_from_llama_cpp,
     generate_from_openai,
@@ -34,6 +34,7 @@ class SendToWebsocket:
             send_to_stream=False,
         )
         assert isinstance(previous_chats, list)
+        # send initial message to websocket containing chatroom_ids and previous_chats
         await SendToWebsocket.message(
             websocket=buffer.websocket,
             msg=InitMessage(
@@ -143,9 +144,8 @@ class HandleMessage:
         buffer: BufferedUserContext,
     ) -> None:
         user_token: int = buffer.current_user_gpt_context.get_tokens_of(msg)
-        if (
-            user_token > buffer.current_user_gpt_context.token_per_request
-        ):  # if user message is too long
+        if user_token > buffer.current_user_gpt_context.token_per_request:
+            # if user message is too long, raise exception
             raise GptTooMuchTokenException(
                 msg=f"Message too long. Now {user_token} tokens, but {buffer.current_user_gpt_context.token_per_request} tokens allowed."
             )
@@ -159,35 +159,35 @@ class HandleMessage:
     async def gpt(
         buffer: BufferedUserContext,
     ) -> None:
+        current_model: LLMModel = buffer.current_user_gpt_context.gpt_model.value
         try:
-            if isinstance(buffer.current_user_gpt_context.gpt_model.value, OpenAIModel):
-                msg: str = await SendToWebsocket.stream(
+            if isinstance(current_model, OpenAIModel):
+                await SendToWebsocket.stream(
                     websocket=buffer.websocket,
                     chatroom_id=buffer.current_chatroom_id,
                     stream=generate_from_openai(
                         user_gpt_context=buffer.current_user_gpt_context
                     ),
                     finish=True,
-                    model_name="chatgpt",
+                    model_name=current_model.name,
                 )
             elif isinstance(
                 buffer.current_user_gpt_context.gpt_model.value, LlamaCppModel
             ):
                 m_queue, m_done = process_manager.Queue(), process_manager.Event()
-                # async_queue, async_done = asyncio.Queue(), asyncio.Event()
                 loop = asyncio.get_event_loop()
                 prompt: str = message_history_organizer(
                     user_gpt_context=buffer.current_user_gpt_context,
                     return_as_string=True,
-                )  # type: ignore
+                )
                 try:
-                    msg, _ = await asyncio.gather(
+                    await asyncio.gather(
                         SendToWebsocket.stream(
                             websocket=buffer.websocket,
                             chatroom_id=buffer.current_chatroom_id,
                             finish=True,
                             chunk_size=1,
-                            model_name="llama",
+                            model_name=current_model.name,
                             stream=generate_from_llama_cpp(
                                 user_gpt_context=buffer.current_user_gpt_context,
                                 m_queue=m_queue,
@@ -208,7 +208,6 @@ class HandleMessage:
                     raise e
                 finally:
                     m_done.set()
-
             else:
                 raise GptModelNotImplementedException(
                     msg="Model not implemented. Please contact administrator."
