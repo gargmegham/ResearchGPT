@@ -32,8 +32,8 @@ async def update_chatroom(
     chatroom: schemas.ChatRoomUpdate,
     user_id: int = Depends(get_user_id),
 ):
-    await repository.update_chatroom(
-        chatroom_id=chatroom_id, chatroom=chatroom, user_id=user_id
+    await repository.update_chatroom_title(
+        chatroom_id=chatroom_id, title=chatroom.title, user_id=user_id
     )
     return Response(status_code=200)
 

@@ -23,16 +23,18 @@ async def validate_id(id: int, model: Base) -> bool:
         return True
 
 
-async def update_chatroom(
-    chatroom_id: int, chatroom: schemas.ChatRoomUpdate, user_id: int
-):
+async def update_chatroom_title(chatroom_id: int, title: str, user_id: int):
     async with db.session() as transaction:
-        chatroom = await transaction.get(models.ChatRoom, chatroom_id)
+        q = select(models.ChatRoom).where(
+            models.ChatRoom.id == chatroom_id, models.ChatRoom.user_id == user_id
+        )
+        result = await transaction.execute(q)
+        chatroom = result.scalars().first()
         if chatroom is None:
             raise Exception("Chatroom not found")
-        chatroom.title = chatroom.title
+        chatroom.title = title
         await transaction.commit()
-    return None
+    return
 
 
 async def delete_chatroom(chatroom_id: int, user_id: int) -> None:
