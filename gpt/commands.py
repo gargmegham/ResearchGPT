@@ -413,8 +413,10 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
     @staticmethod
     @CommandResponse.handle_gpt
     async def query(query: str, /, buffer: BufferedUserContext) -> None:
-        """Query from redis vectorstore\n
-        /query <query>"""
+        """
+        Query from redis vectorstore
+        /query <query>
+        """
         k: int = 3
         found_document: list[Document] = (
             await VectorStoreManager.asimilarity_search(queries=[query], k=k)
