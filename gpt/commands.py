@@ -428,12 +428,6 @@ And below text, enclosed in triple backticked, is everything I could find in my 
 ```
 {found_text}
 ```"""
-        else:
-            await SendToWebsocket.message(
-                websocket=buffer.websocket,
-                msg="No results found from vectorstore. Just sending your query...",
-                chatroom_id=buffer.current_chatroom_id,
-            )
         await MessageManager.add_message_history_safely(
             user_gpt_context=buffer.current_user_gpt_context,
             content=query,
