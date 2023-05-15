@@ -11,7 +11,7 @@ async def create_chatroom(chatroom: schemas.ChatRoomCreate, user_id: int):
         transaction.add(db_chatroom)
         await transaction.commit()
         await transaction.refresh(db_chatroom)
-        create_new_chatroom(user_id, db_chatroom.id, None)
+        create_new_chatroom(user_id, db_chatroom.id)
         return db_chatroom
 
 
@@ -42,7 +42,7 @@ async def delete_chatroom(chatroom_id: int, user_id: int) -> None:
             raise Exception("Chatroom not found")
         await transaction.delete(chatroom)
         await transaction.commit()
-        await delete_old_chatroom(chatroom_id, user_id, None)
+        await delete_old_chatroom(chatroom_id, user_id)
     return
 
 
