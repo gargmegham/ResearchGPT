@@ -1,7 +1,7 @@
 import asyncio
 
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.models import GptRoles, MessageHistory, UserGptContext
+from gpt.common import GptRoles, MessageHistory, UserGptContext
 
 
 class MessageManager:
@@ -43,7 +43,6 @@ class MessageManager:
             role=role,
             message_history=message_history,
         )
-
         if num_of_deleted_histories > 0:
             asyncio.gather(
                 ChatGptCacheManager.lpop_message_history(
@@ -65,8 +64,13 @@ class MessageManager:
         user_gpt_context: UserGptContext,
         role: GptRoles | str,
         count: int | None = None,
-        rpop: bool = True,  # if False, lpop
+        rpop: bool = True,
     ) -> MessageHistory | None:
+        """
+        Remove the last message history from the list and return it.
+        If count is specified, remove the last count message histories from the list and return them.
+        If rpop is False, remove the first message history from the list and return it.
+        """
         role = GptRoles.get_name(role).lower()
         try:
             message_history: MessageHistory = getattr(

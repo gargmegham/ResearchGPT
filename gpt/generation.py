@@ -15,24 +15,29 @@ from app.exceptions import (
     GptLengthException,
     GptTextGenerationException,
 )
-from gpt.config import ChatGPTConfig
+from app.logger import api_logger
+from database.dataclasses import ChatGPTConfig
+from database.schemas import SendInitToWebsocket, SendToStream
+from gpt.common import GptRoles, UserGptContext
 from gpt.message_manager import MessageManager
-from gpt.models import GptRoles, SendInitToWebsocket, SendToStream, UserGptContext
-
-logger = logging.getLogger(__name__)
 
 
 def message_history_organizer(
     user_gpt_context: UserGptContext,
     send_to_stream: bool = True,
     return_as_string: bool = False,
-) -> Union[list[dict], str]:  # organize message history for openai api
+) -> Union[list[dict], str]:
+    """
+    Organize message history for openai api
+    :param user_gpt_context: user gpt context
+    :param send_to_stream: whether to send to stream or websocket
+    :param return_as_string: whether to return as string or list
+    :return: message history
+    """
     message_histories: list[dict[str, str]] = []
     if send_to_stream:
         for system_history in user_gpt_context.system_message_histories:
-            message_histories.append(
-                SendToStream.from_orm(system_history).dict()
-            )  # append system message history
+            message_histories.append(SendToStream.from_orm(system_history).dict())
     for user_message_history, gpt_message_history in zip_longest(
         user_gpt_context.user_message_histories,
         user_gpt_context.gpt_message_histories,
@@ -41,13 +46,14 @@ def message_history_organizer(
             SendToStream.from_orm(user_message_history).dict()
             if send_to_stream
             else SendInitToWebsocket.from_orm(user_message_history).dict()
-        ) if user_message_history is not None else ...  # append user message history
+        ) if user_message_history is not None else ...
         message_histories.append(
             SendToStream.from_orm(gpt_message_history).dict()
             if send_to_stream
             else SendInitToWebsocket.from_orm(gpt_message_history).dict()
-        ) if gpt_message_history is not None else ...  # append gpt message history
+        ) if gpt_message_history is not None else ...
     if user_gpt_context.optional_info.get("is_discontinued", False):
+        # add continuation to last message, if discontinued, this is to prevent the user from being able to send messages after the chat is discontinued
         for message_history in reversed(message_histories):
             if message_history["role"] == user_gpt_context.user_gpt_profile.gpt_role:
                 message_history["content"] += "...[CONTINUATION]"
@@ -68,7 +74,6 @@ def message_history_organizer(
         )
         if prefix is None:
             prefix = ""
-
         for message_history in message_histories:
             if message_history["role"] == system_role:
                 prefix += f"{system_role.upper()}: {message_history['content']}\n"
@@ -77,28 +82,26 @@ def message_history_organizer(
             elif message_history["role"] == gpt_role:
                 prefix += f"{gpt_role.upper()}: {message_history['content'].strip()}\n"
             else:
-                logger.error(f"Invalid message history: {message_history}")
+                api_logger.error(f"Invalid message history: {message_history}")
                 raise Exception("Invalid message history")
         prefix += f"{gpt_role.upper()}: "
         return prefix
     else:
-        return message_histories  # return message histories to be used in openai api
+        return message_histories
 
 
 async def generate_from_openai(
-    user_gpt_context: UserGptContext,  # gpt context for user
-) -> AsyncGenerator:  # async generator for streaming
+    user_gpt_context: UserGptContext,
+) -> AsyncGenerator:
     user_defined_api_key: str | None = user_gpt_context.optional_info.get("api_key")
     default_api_key: str | None = user_gpt_context.gpt_model.value.api_key
     api_key_to_use: Any = (
         user_defined_api_key if user_defined_api_key is not None else default_api_key
     )
-    async with httpx.AsyncClient(
-        timeout=ChatGPTConfig.wait_for_timeout
-    ) as client:  # initialize client
+    async with httpx.AsyncClient(timeout=ChatGPTConfig.wait_for_timeout) as client:
         is_appending_discontinued_message: bool = False
         content_buffer: str = ""
-        while True:  # stream until connection is closed
+        while True:
             if not user_gpt_context.optional_info.get("is_discontinued", False):
                 content_buffer = ""
             try:
@@ -108,7 +111,7 @@ async def generate_from_openai(
                     headers={
                         "Content-Type": "application/json",
                         "Authorization": f"Bearer {api_key_to_use}",
-                    },  # set headers for openai api request
+                    },
                     json={
                         "model": user_gpt_context.gpt_model.value.name,
                         "messages": message_history_organizer(
@@ -127,11 +130,10 @@ async def generate_from_openai(
                         "stop": None,
                         "logit_bias": {},
                         "user": user_gpt_context.user_id,
-                    },  # set json for openai api request
+                    },
                 ) as streaming_response:
-                    if (
-                        streaming_response.status_code != 200
-                    ):  # if status code is not 200
+                    if streaming_response.status_code != 200:
+                        # if status code is not 200
                         err_msg = orjson.loads(await streaming_response.aread()).get(
                             "error"
                         )
@@ -139,46 +141,40 @@ async def generate_from_openai(
                             err_msg = err_msg.get("message")
                         raise GptConnectionException(
                             msg=f"OpenAI Server Error: {err_msg}"
-                        )  # raise exception for connection error
+                        )
                     stream_buffer: str = ""
-                    async for stream in streaming_response.aiter_text():  # stream from api
+                    # stream from api
+                    async for stream in streaming_response.aiter_text():
                         stream_buffer += stream
+                        # parse json from stream
                         for match in ChatGPTConfig.api_regex_pattern.finditer(
                             stream_buffer
-                        ):  # parse json from stream
+                        ):
                             try:
                                 json_data: dict = orjson.loads(match.group(1))[
                                     "choices"
-                                ][
-                                    0
-                                ]  # data from api
-                            except orjson.JSONDecodeError:  # if json is invalid
+                                ][0]
+                            except orjson.JSONDecodeError:
                                 continue
                             finally:
-                                stream_buffer = stream_buffer[
-                                    match.end() :
-                                ]  # noqa: E203
-                            finish_reason: str | None = json_data.get(
-                                "finish_reason"
-                            )  # reason for finishing stream
-                            delta: dict | None = json_data.get(
-                                "delta"
-                            )  # generated text from api
+                                stream_buffer = stream_buffer[match.end() :]
+                            finish_reason: str | None = json_data.get("finish_reason")
+                            delta: dict | None = json_data.get("delta")
                             if finish_reason == "length":
                                 raise GptLengthException(
                                     msg="Incomplete model output due to max_tokens parameter or token limit"
-                                )  # raise exception for token limit
+                                )
                             elif finish_reason == "content_filter":
                                 raise GptContentFilterException(
                                     msg="Omitted content due to a flag from our content filters"
-                                )  # raise exception for openai content filter
+                                )
                             elif delta is not None:
                                 delta_content: str | None = delta.get("content")
                                 if delta_content is not None:
                                     content_buffer += delta_content
                                     yield delta_content
             except GptLengthException:
-                logger.error("token limit exceeded")
+                api_logger.error("token limit exceeded")
                 if is_appending_discontinued_message:
                     await MessageManager.set_message_history_safely(
                         user_gpt_context=user_gpt_context,
@@ -197,18 +193,18 @@ async def generate_from_openai(
                 user_gpt_context.optional_info["is_discontinued"] = True
                 continue
             except GptException as gpt_exception:
-                logger.error(f"gpt exception: {gpt_exception.msg}")
+                api_logger.error(f"gpt exception: {gpt_exception.msg}")
                 await MessageManager.pop_message_history_safely(
                     user_gpt_context=user_gpt_context, role=GptRoles.USER
                 )
                 yield gpt_exception.msg
                 break
             except httpx.TimeoutException:
-                logger.error("gpt timeout exception")
+                api_logger.error("gpt timeout exception")
                 await sleep(ChatGPTConfig.wait_for_reconnect)
                 continue
             except Exception as exception:
-                logger.error(f"unexpected gpt exception: {exception}")
+                api_logger.error(f"unexpected gpt exception: {exception}")
                 await MessageManager.pop_message_history_safely(
                     user_gpt_context=user_gpt_context, role=GptRoles.USER
                 )
@@ -264,7 +260,5 @@ async def generate_from_llama_cpp(
             )
             break
         else:
-            logger.error(f"llama_cpp exception: {generation}")
-            raise GptTextGenerationException(
-                msg="Unexpected response from llama_cpp"
-            )  # raise exception for unexpected response
+            api_logger.error(f"llama_cpp exception: {generation}")
+            raise GptTextGenerationException(msg="Unexpected response from llama_cpp")

@@ -1,221 +1,78 @@
-import builtins
-import logging
 import os
-from functools import partial
 
-from fastapi import Depends, FastAPI, Request, Response, WebSocket, WebSocketDisconnect
-from sqlalchemy.orm import Session
-from sse_starlette.sse import EventSourceResponse
+from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
+from app import apis, websockets
 from app.dependencies import process_pool_executor
-from app.exceptions import Responses_400
-from app.globals import *
-from database import SessionLocal, cache, repository, schemas, models
-from gpt.stream_manager import begin_chat
-from gpt.websocket_manager import SendToWebsocket
-
-builtins.print = partial(print, flush=True)
-
-logging.config.fileConfig("config/logging.conf", disable_existing_loggers=False)
-
-from database import schemas
-
-"""
-Create directories if not exist
-"""
-os.makedirs(LOG_DIR, exist_ok=True)
-with open(os.path.join(LOG_DIR, "bash.log"), "a") as f:
-    pass
-with open(os.path.join(LOG_DIR, "app.log"), "a") as f:
-    pass
-
-# get root logger
-logger = logging.getLogger(__name__)
-
-app = FastAPI(
-    title="ResearchGPT",
-    description="ResearchGPT is a tool for researchers to generate ideas and insights.",
-    version="0.1.0",
-)
-
-cache.start()
+from app.globals import ALLOWED, LOG_DIR, TRUSTED
+from app.logger import api_logger
+from app.middlewares import TrustedHostMiddleware, authentication_middleware
+from database import cache, db
 
 
-@app.on_event("startup")
-async def startup():
-    if cache.redis is None:
-        raise ConnectionError("Redis is not connected yet!")
-    if cache.is_initiated and await cache.redis.ping():
-        logger.critical("Redis CACHE connected!")
-    else:
-        logger.critical("Redis CACHE connection failed!")
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    process_pool_executor.shutdown()
-    await cache.close()
-    logger.critical("DB & CACHE connection closed!")
-
-
-@app.exception_handler(Exception)
-async def exception_handler(request: Request, exc: Exception):
-    return Response("Internal server error", status_code=500)
-
-
-@app.middleware("http")
-async def authentication_middleware(request: Request, call_next):
+def create_app() -> FastAPI:
     """
-    Sample cookie: XSRF-TOKEN=; pubtrawlr_session=;
+    Create directories if not exist
     """
-    response = Response("Internal server error", status_code=500)
-    try:
-        xsrf = request.cookies.get("XSRF-TOKEN")
-        session = request.cookies.get("pubtrawlr_session")
-        if xsrf and session:
-            # TODO replace with actual authentication
-            TEMP_USER_ID = 25
-            request.state.user_id = TEMP_USER_ID
-            response = await call_next(request)
-        elif request.url.path in ["/", "/docs", "/openapi.json", "/redoc"]:
-            response = await call_next(request)
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(os.path.join(LOG_DIR, "app.log"), "a") as f:
+        pass
+    app = FastAPI(
+        title="ResearchGPT",
+        description="ResearchGPT is a tool for researchers to generate ideas and insights.",
+        version="0.1.0",
+    )
+    db.start()
+    cache.start()
+    # Middlewares
+    """
+    Access control middleware: Authorized request only
+    CORS middleware: Allowed sites only
+    Trusted host middleware: Allowed host only
+    """
+    app.add_middleware(
+        dispatch=authentication_middleware, middleware_class=BaseHTTPMiddleware
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOWED,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=TRUSTED,
+        except_path=["/health"],
+    )
+    # Routers
+    app.include_router(websockets.router, prefix="/ws", tags=["websocket"])
+    app.include_router(
+        apis.router,
+        prefix="/api",
+        tags=["auth"],
+    )
+
+    @app.on_event("startup")
+    async def startup():
+        if db.is_initiated:
+            api_logger.critical("MySQL DB connected!")
         else:
-            response = Response("Unauthorized", status_code=401)
-    finally:
-        return response
+            api_logger.critical("MySQL DB connection failed!")
+        if cache.redis is None:
+            raise ConnectionError("Redis is not connected yet!")
+        if cache.is_initiated and await cache.redis.ping():
+            api_logger.critical("Redis CACHE connected!")
+        else:
+            api_logger.critical("Redis CACHE connection failed!")
 
+    @app.on_event("shutdown")
+    async def shutdown():
+        process_pool_executor.shutdown()
+        await db.close()
+        await cache.close()
+        api_logger.critical("DB & CACHE connection closed!")
 
-@app.middleware("http")
-async def db_session_middleware(request: Request, call_next):
-    try:
-        request.state.db = SessionLocal()
-        response = await call_next(request)
-    except:
-        response = Response("Internal server error", status_code=500)
-    finally:
-        request.state.db.close()
-    return response
-
-
-def get_db(request: Request):
-    """
-    Dependency to get db session
-    """
-    return request.state.db
-
-
-def get_user_id(request: Request):
-    """
-    Dependency to get user_id
-    """
-    return request.state.user_id
-
-
-def get_user_id_websocket(websocket: WebSocket):
-    """
-    Dependency to get user_id
-    """
-    try:
-        cookies = websocket.headers["cookie"]
-        xsrf = cookies.split("XSRF-TOKEN=")[1].split(";")[0]
-        session = cookies.split("pubtrawlr_session=")[1].split(";")[0]
-        if xsrf and session:
-            # TODO replace with actual authentication
-            logger.info(
-                f"User authenticated! XSRF-TOKEN={xsrf}; pubtrawlr_session={session};"
-            )
-            pass
-        return 25
-    except:
-        return None
-
-
-@app.get("/")
-def root():
-    return {"message": "Server is running..."}
-
-
-@app.post("/chatroom/", response_model=schemas.ChatRoom)
-def create_chatroom(
-    chatroom: schemas.ChatRoomCreate,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    chatroom = repository.create_chatroom(db=db, chatroom=chatroom, user_id=user_id)
-    return chatroom
-
-
-@app.put("/chatroom/{chatroom_id}")
-def update_chatroom(
-    chatroom_id: int,
-    chatroom: schemas.ChatRoomUpdate,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    repository.update_chatroom(
-        db=db, chatroom_id=chatroom_id, chatroom=chatroom, user_id=user_id
-    )
-    return Response(status_code=200)
-
-
-@app.delete("/chatroom/{chatroom_id}")
-def delete_chatroom(
-    chatroom_id: int,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    repository.delete_chatroom(db=db, chatroom_id=chatroom_id, user_id=user_id)
-    return Response(status_code=200)
-
-
-@app.get(
-    "/chatroom/{chatroom_id}/{last_message_id}",
-    response_model=list[schemas.ChatRoomMessage],
-)
-def get_chatroom(
-    chatroom_id: int,
-    last_message_id: int = -1,
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    chatroom = repository.get_chatroom(
-        db=db, chatroom_id=chatroom_id, user_id=user_id, last_message_id=last_message_id
-    )
-    return chatroom
-
-
-@app.get("/chatroom/", response_model=list[schemas.ChatRoom])
-def get_chatrooms(
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_user_id),
-):
-    return repository.get_chatrooms(db=db, user_id=user_id)
-
-
-@app.websocket("/chat-socket/")
-async def ws_chatgpt(
-    websocket: WebSocket,
-    user_id: int = Depends(get_user_id_websocket),
-):
-    try:
-        await websocket.accept()
-        await begin_chat(
-            websocket=websocket,
-            user_id=user_id,
-        )
-    except ValueError as exception:
-        logger.error(exception, exc_info=True)
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg=f"Chatroom not found. close the connection. ({exception})",
-            chatroom_id="null",
-        )
-    except WebSocketDisconnect:
-        ...
-    except Exception as exception:
-        logger.error(exception, exc_info=True)
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg=f"An unknown error has occurred. close the connection. ({exception})",
-            chatroom_id="null",
-        )
+    return app

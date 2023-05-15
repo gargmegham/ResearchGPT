@@ -1,10 +1,11 @@
-import re
-
 from orjson import dumps as orjson_dumps
 from orjson import loads as orjson_loads
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.future import select
 
-from database import cache
-from gpt.models import (
+from app.exceptions import MySQLConnectionError
+from database import cache, db, models
+from gpt.common import (
     GptRoles,
     LLMModels,
     MessageHistory,
@@ -41,21 +42,23 @@ class ChatGptCacheManager:
         }
 
     @classmethod
-    async def get_all_chatrooms(cls, user_id: int) -> list[str]:
+    async def get_all_chatrooms(cls, user_id: int) -> list[int]:
         """
-        Get all chatrooms that user_id has participated in, from regex pattern of "chatgpt:{user_id}:{chatroom_id}:*" where chatroom_id is any string
+        Get all chatrooms
         :param user_id: user id
         :return: list of chatroom ids
         """
-        found_chatrooms: list[str] = []
-        pattern = re.compile(rf"^chatgpt:{user_id}:(.*):.*$")
-        async for match in cache.redis.scan_iter(
-            f"chatgpt:{user_id}:*:user_gpt_profile"
-        ):
-            match_found = pattern.search(match.decode("utf-8"))
-            if match_found is not None:
-                found_chatrooms.append(match_found.group(1))
-        return found_chatrooms
+        chatroom_ids: list[int] = []
+        try:
+            async with db.session() as transaction:
+                q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
+                result = await transaction.execute(q)
+                chatroom_ids = [chatroom.id for chatroom in result.scalars().all()]
+            return chatroom_ids
+        except OperationalError:
+            raise MySQLConnectionError(
+                "MySQL connection error. Please try again later."
+            )
 
     @classmethod
     async def read_context(cls, user_id: int, chatroom_id: int) -> UserGptContext:
@@ -181,19 +184,13 @@ class ChatGptCacheManager:
 
     @classmethod
     async def delete_chatroom(cls, user_id: int, chatroom_id: int) -> int:
-        # delete all keys starting with "chatgpt:{user_id}:{chatroom_id}:"
+        """
+        Delete all keys starting with "chatgpt:{user_id}:{chatroom_id}:
+        """
         keys = [
             key
             async for key in cache.redis.scan_iter(f"chatgpt:{user_id}:{chatroom_id}:*")
         ]
-        if not keys:
-            return 0
-        return await cache.redis.delete(*keys)
-
-    @classmethod
-    async def delete_user(cls, user_id: int) -> int:
-        # delete all keys starting with "chatgpt:{user_id}:"
-        keys = [key async for key in cache.redis.scan_iter(f"chatgpt:{user_id}:*")]
         if not keys:
             return 0
         return await cache.redis.delete(*keys)
@@ -340,6 +337,9 @@ class ChatGptCacheManager:
         index: int,
         role: GptRoles | str,
     ) -> bool:
+        """
+        Set the message history at the given index to the given message history
+        """
         role = GptRoles.get_name(role).lower()
         key = cls._generate_key(user_id, chatroom_id, f"{role}_message_histories")
         # value in redis is a list of message histories
