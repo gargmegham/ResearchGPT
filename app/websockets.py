@@ -40,7 +40,7 @@ async def ws_chatgpt(
         await SendToWebsocket.message(
             websocket=websocket,
             msg=f"Chatroom not found. close the connection. ({exception})",
-            chatroom_id="null",
+            chatroom_id=0,
         )
     except WebSocketDisconnect:
         ...
@@ -49,5 +49,5 @@ async def ws_chatgpt(
         await SendToWebsocket.message(
             websocket=websocket,
             msg=f"An unknown error has occurred. close the connection. ({exception})",
-            chatroom_id="null",
+            chatroom_id=0,
         )

@@ -8,6 +8,7 @@ from app.exceptions import (
     GptOtherException,
     GptTextGenerationException,
     GptTooMuchTokenException,
+    MySQLConnectionError,
 )
 from app.logger import api_logger
 from database.schemas import MessageFromWebsocket, MessageToWebsocket
@@ -33,14 +34,11 @@ async def begin_chat(
             chatroom_ids=await ChatGptCacheManager.get_all_chatrooms(user_id=user_id),
         ),
     )
-
     await SendToWebsocket.initiation_of_chat(
         buffer=buffer,
         send_chatroom_ids=True,
         send_previous_chats=True,
     )
-
-    # loop until connection is closed
     while True:
         try:
             rcvd: dict = await websocket.receive_json()
@@ -101,6 +99,14 @@ async def begin_chat(
             await SendToWebsocket.message(
                 websocket=websocket,
                 msg="Invalid message. Message is not in the correct format, maybe frontend - backend version mismatch?",
+                chatroom_id=buffer.current_chatroom_id,
+            )
+            continue
+        except MySQLConnectionError:
+            api_logger.error("MySQL connection error", exc_info=True)
+            await SendToWebsocket.message(
+                websocket=websocket,
+                msg="Database connection error. Please try again.",
                 chatroom_id=buffer.current_chatroom_id,
             )
             continue

@@ -1,7 +1,9 @@
 from orjson import dumps as orjson_dumps
 from orjson import loads as orjson_loads
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
 
+from app.exceptions import MySQLConnectionError
 from database import cache, db, models
 from gpt.common import (
     GptRoles,
@@ -47,11 +49,16 @@ class ChatGptCacheManager:
         :return: list of chatroom ids
         """
         chatroom_ids: list[int] = []
-        async with db.session() as transaction:
-            q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
-            result = await transaction.execute(q)
-            chatroom_ids = [chatroom.id for chatroom in result.scalars().all()]
-        return chatroom_ids
+        try:
+            async with db.session() as transaction:
+                q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
+                result = await transaction.execute(q)
+                chatroom_ids = [chatroom.id for chatroom in result.scalars().all()]
+            return chatroom_ids
+        except OperationalError:
+            raise MySQLConnectionError(
+                "MySQL connection error. Please try again later."
+            )
 
     @classmethod
     async def read_context(cls, user_id: int, chatroom_id: int) -> UserGptContext:

@@ -43,6 +43,22 @@ class APIException(Exception):
         return self
 
 
+class MySQLConnectionError(Exception):
+    status_code: int = 500
+    internal_code: int = 1001
+    msg: str = "Database Connection Error"
+    detail: str = "Database Connection Error"
+
+    def __init__(self, ex: Optional[Exception] = None):
+        super().__init__(
+            status_code=self.status_code,
+            internal_code=self.internal_code,
+            msg=self.msg,
+            detail=self.detail,
+            ex=ex,
+        )
+
+
 class InternalServerError(APIException):
     status_code: int = 500
     internal_code: int = 9999

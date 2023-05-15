@@ -25,6 +25,7 @@ class VectorStoreManager:
         chunk_size: int = 500,
         chunk_overlap: int = 0,
         tokenizer_model: str = "gpt-3.5-turbo",
+        metadata: list[dict] | None = None,
     ) -> list[str]:
         """Create documents from text and add them to the vectorstore."""
         texts = TokenTextSplitter(
@@ -32,7 +33,12 @@ class VectorStoreManager:
             chunk_overlap=chunk_overlap,
             model_name=tokenizer_model,
         ).split_text(text)
-        await cache.vectorstore.aadd_texts(texts=texts)
+        await cache.vectorstore.aadd_texts(
+            texts=texts,
+            metadatas=[metadata for _ in range(len(texts))]
+            if metadata is not None
+            else None,
+        )
         return texts
 
     @staticmethod

@@ -19,6 +19,7 @@ from gpt.generation import (
 )
 from gpt.llama_cpp import llama_cpp_generation
 from gpt.message_manager import MessageManager
+from pubtrawlr import pubmed_context
 
 
 class SendToWebsocket:
@@ -44,6 +45,7 @@ class SendToWebsocket:
             chatroom_id=buffer.current_chatroom_id,
             init=True,
         )
+        await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod
     async def message(

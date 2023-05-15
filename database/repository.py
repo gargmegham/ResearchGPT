@@ -53,3 +53,13 @@ async def get_chatrooms(user_id: int) -> list:
         q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
         result = await transaction.execute(q)
         return result.scalars().all()
+
+
+async def get_chatroom(chatroom_id: int) -> models.ChatRoom:
+    async with db.session() as transaction:
+        q = select(models.ChatRoom).where(models.ChatRoom.id == chatroom_id)
+        result = await transaction.execute(q)
+        result = result.scalars().first()
+        if result is None:
+            raise Exception("Chatroom not found")
+        return result
