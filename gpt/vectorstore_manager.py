@@ -2,7 +2,9 @@ from asyncio import gather
 
 from langchain.docstore.document import Document
 from langchain.text_splitter import TokenTextSplitter
+import base64
 
+from datetime import datetime
 from database import cache
 
 
@@ -25,7 +27,7 @@ class VectorStoreManager:
         chunk_size: int = 500,
         chunk_overlap: int = 0,
         tokenizer_model: str = "gpt-3.5-turbo",
-        metadata: list[dict] | None = None,
+        search: str = None,
     ) -> list[str]:
         """Create documents from text and add them to the vectorstore."""
         texts = TokenTextSplitter(
@@ -33,12 +35,19 @@ class VectorStoreManager:
             chunk_overlap=chunk_overlap,
             model_name=tokenizer_model,
         ).split_text(text)
-        await cache.vectorstore.aadd_texts(
-            texts=texts,
-            metadatas=[metadata for _ in range(len(texts))]
-            if metadata is not None
-            else None,
-        )
+        if search:
+            base64_search = base64.b64encode(search.encode("utf-8")).decode("utf-8")
+            redis_key = f"doc:search:{base64_search}"
+            timestamp = str(datetime.now().timestamp())
+            old_timestamp = await cache.redis.get(redis_key)
+            if not old_timestamp:
+                await cache.redis.set(redis_key, timestamp)
+            elif float(timestamp) - float(old_timestamp) > 604800:
+                await cache.redis.set(redis_key, timestamp)
+                return texts
+            else:
+                return texts
+        await cache.vectorstore.aadd_texts(texts=texts)
         return texts
 
     @staticmethod

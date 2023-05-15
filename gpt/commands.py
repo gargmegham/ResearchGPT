@@ -122,25 +122,21 @@ async def command_handler(
         return
     elif response_type is ResponseType.HANDLE_GPT:
         await HandleMessage.gpt(
-            translate=received.translate,
             buffer=buffer,
         )
         return
     elif response_type is ResponseType.HANDLE_USER:
         await HandleMessage.user(
             msg=callback_response,
-            translate=received.translate,
             buffer=buffer,
         )
         return
     elif response_type is ResponseType.HANDLE_BOTH:
         await HandleMessage.user(
             msg=callback_response,
-            translate=received.translate,
             buffer=buffer,
         )
         await HandleMessage.gpt(
-            translate=received.translate,
             buffer=buffer,
         )
         return

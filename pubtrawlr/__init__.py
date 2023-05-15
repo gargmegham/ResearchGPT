@@ -34,7 +34,7 @@ def login(
 
 async def pubmed_context(chatroom_id: int):
     chatroom = await repository.get_chatroom(chatroom_id)
-    search_term = chatroom.search
+    search = chatroom.search
     token = login()
     with requests.session() as session:
         url = "https://app.synthbot.mindstaging.com/api/abstracts/s6461d0bdb511e"
@@ -45,9 +45,5 @@ async def pubmed_context(chatroom_id: int):
         processed_paper_text = process_papers(papers=response_json)
         if processed_paper_text:
             await VectorStoreManager.create_documents(
-                processed_paper_text,
-                metadata={
-                    "search_term": str(search_term).lower().strip(),
-                    "timestamp": str(datetime.now().timestamp()),
-                },
+                processed_paper_text, search=search
             )
