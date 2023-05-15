@@ -47,21 +47,6 @@ async def delete_chatroom(
     return Response(status_code=200)
 
 
-@router.get(
-    "/chatroom/{chatroom_id}/{last_message_id}",
-    response_model=list[schemas.ChatRoomMessage],
-)
-async def get_chatroom(
-    chatroom_id: int,
-    last_message_id: int = -1,
-    user_id: int = Depends(get_user_id),
-):
-    chatroom = await repository.get_chatroom(
-        chatroom_id=chatroom_id, user_id=user_id, last_message_id=last_message_id
-    )
-    return chatroom
-
-
 @router.get("/chatroom/", response_model=list[schemas.ChatRoom])
 async def get_chatrooms(
     user_id: int = Depends(get_user_id),

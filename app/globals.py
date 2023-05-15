@@ -14,7 +14,6 @@ config.read(CONFIG_FILE)
 """
 Main Secret Key
 """
-SECRET_KEY = config.get("main", "SECRET_KEY")
 HOST_MAIN = config.get("main", "HOST_MAIN")
 DEBUG_MODE = config.get("main", "DEBUG_MODE")
 

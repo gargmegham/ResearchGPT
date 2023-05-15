@@ -26,7 +26,6 @@ async def begin_chat(
     websocket: WebSocket,
     user_id: int,
 ) -> None:
-    # initialize variables
     buffer: BufferedUserContext = BufferedUserContext(
         user_id=user_id,
         websocket=websocket,

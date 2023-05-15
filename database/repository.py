@@ -48,21 +48,3 @@ async def get_chatrooms(user_id: int) -> list:
         q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
         result = await transaction.execute(q)
         return result.scalars().all()
-
-
-async def get_chatroom(chatroom_id: int, user_id: int, last_message_id: int = -1):
-    async with db.session() as transaction:
-        q = (
-            select(models.ChatRoomMessage)
-            .where(
-                models.ChatRoomMessage.chatroom_id == chatroom_id,
-                models.ChatRoomMessage.user_id == user_id,
-            )
-            .order_by(models.ChatRoomMessage.id.desc())
-        )
-        if last_message_id > 0:
-            q = q.where(models.ChatRoomMessage.id > last_message_id)
-        q = q.limit(10)
-        result = await transaction.execute(q)
-        messages = [message for message in result.scalars().all()]
-        return messages[::-1]

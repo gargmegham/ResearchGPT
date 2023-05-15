@@ -1,5 +1,4 @@
 [main]
-SECRET_KEY=
 HOST_MAIN=
 DEBUG_MODE=0
 
