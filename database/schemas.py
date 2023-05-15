@@ -1,13 +1,6 @@
 from pydantic import BaseModel
 
 
-class ChatRoomBase(BaseModel):
-    id: int
-    user_id: int
-    title: str
-    search: str
-
-
 class ChatRoomCreate(BaseModel):
     search: str
 
@@ -16,7 +9,12 @@ class ChatRoomUpdate(BaseModel):
     title: str
 
 
-class ChatRoom(ChatRoomBase):
+class ChatRoom(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    search: str
+
     class Config:
         orm_mode = True
 
