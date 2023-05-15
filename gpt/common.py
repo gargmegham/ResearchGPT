@@ -337,7 +337,7 @@ class UserGptContext:
 
     @property
     def user_id(self) -> str:
-        return self.user_gpt_profile.user_id
+        return str(self.user_gpt_profile.user_id)
 
     @property
     def chatroom_id(self) -> str:

@@ -12,15 +12,13 @@ def get_user_id_websocket(websocket: WebSocket):
     Dependency to get user_id
     """
     try:
-        cookies = websocket.headers["cookie"]
-        xsrf = cookies.split("XSRF-TOKEN=")[1].split(";")[0]
-        session = cookies.split("pubtrawlr_session=")[1].split(";")[0]
+        xsrf = websocket.headers["XSRF-TOKEN"]
+        session = websocket.headers["pubtrawlr_session"]
         if xsrf and session:
             # TODO replace with actual authentication
             api_logger.info(
                 f"User authenticated! XSRF-TOKEN={xsrf}; pubtrawlr_session={session};"
             )
-            pass
         return 25
     except:
         return None

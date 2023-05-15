@@ -80,7 +80,7 @@ async def authentication_middleware(request: Request, call_next):
     try:
         xsrf = request.cookies.get("XSRF-TOKEN")
         session = request.cookies.get("pubtrawlr_session")
-        if xsrf and session:
+        if xsrf and session and request.url.path.startswith("/api"):
             # TODO replace with actual authentication
             TEMP_USER_ID = 25
             request.state.user_id = TEMP_USER_ID
