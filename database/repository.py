@@ -1,8 +1,8 @@
 from sqlalchemy.future import select
 
+from app.exceptions import ChatroomNotFound
 from database import db, models, schemas
 from database.models import Base
-from app.exceptions import ChatroomNotFound
 from gpt.commands import create_new_chatroom, delete_old_chatroom
 
 

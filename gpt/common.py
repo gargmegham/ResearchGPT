@@ -7,8 +7,35 @@ from uuid import uuid4
 from orjson import dumps as orjson_dumps
 from orjson import loads as orjson_loads
 
-from app.globals import OPENAI_API_KEY
+from app.globals import DEFAULT_LLM_MODEL, OPENAI_API_KEY
 from gpt.tokenizers import BaseTokenizer, LlamaTokenizer, OpenAITokenizer
+
+
+class UTC:
+    def __init__(self):
+        self.utc_now = datetime.utcnow()
+
+    @classmethod
+    def now(cls, hour_diff: int = 0) -> datetime:
+        return cls().utc_now + timedelta(hours=hour_diff)
+
+    @classmethod
+    def date(cls, hour_diff: int = 0) -> date:
+        return cls.now(hour_diff=hour_diff).date()
+
+    @classmethod
+    def timestamp(cls, hour_diff: int = 0) -> int:
+        return int(cls.now(hour_diff=hour_diff).strftime("%Y%m%d%H%M%S"))
+
+    @classmethod
+    def timestamp_to_datetime(cls, timestamp: int, hour_diff: int = 0) -> datetime:
+        return datetime.strptime(str(timestamp), "%Y%m%d%H%M%S") + timedelta(
+            hours=hour_diff
+        )
+
+    @classmethod
+    def date_code(cls, hour_diff: int = 0) -> int:
+        return int(cls.date(hour_diff=hour_diff).strftime("%Y%m%d"))
 
 
 @dataclass
@@ -32,7 +59,7 @@ class MessageHistory:
     content: str
     tokens: int
     is_user: bool
-    timestamp: int = field(default_factory=lambda: UTC.timestamp(hour_diff=9))
+    timestamp: int = field(default_factory=UTC.timestamp)
     uuid: str = field(default_factory=lambda: uuid4().hex)
     model_name: str | None = None
 
@@ -92,33 +119,6 @@ class LlamaCppModel(LLMModel):
     def __post_init__(self):
         if self.description is not None:
             self.description_tokens = self.tokenizer.tokens_of(self.description)
-
-
-class UTC:
-    def __init__(self):
-        self.utc_now = datetime.utcnow()
-
-    @classmethod
-    def now(cls, hour_diff: int = 0) -> datetime:
-        return cls().utc_now + timedelta(hours=hour_diff)
-
-    @classmethod
-    def date(cls, hour_diff: int = 0) -> date:
-        return cls.now(hour_diff=hour_diff).date()
-
-    @classmethod
-    def timestamp(cls, hour_diff: int = 0) -> int:
-        return int(cls.now(hour_diff=hour_diff).strftime("%Y%m%d%H%M%S"))
-
-    @classmethod
-    def timestamp_to_datetime(cls, timestamp: int, hour_diff: int = 0) -> datetime:
-        return datetime.strptime(str(timestamp), "%Y%m%d%H%M%S") + timedelta(
-            hours=hour_diff
-        )
-
-    @classmethod
-    def date_code(cls, hour_diff: int = 0) -> int:
-        return int(cls.date(hour_diff=hour_diff).strftime("%Y%m%d"))
 
 
 class LLMModels(Enum):  # gpt models for openai api
@@ -383,7 +383,11 @@ class UserGptContext:
         cls,
         user_id: int,
         chatroom_id: int,
-        gpt_model: LLMModels = LLMModels.gpt_3_5_turbo,
+        gpt_model: LLMModels = getattr(
+            LLMModels,
+            DEFAULT_LLM_MODEL,
+            LLMModels.gpt_3_5_turbo,
+        ),
     ):
         return cls(
             user_gpt_profile=UserGptProfile(user_id=user_id, chatroom_id=chatroom_id),
