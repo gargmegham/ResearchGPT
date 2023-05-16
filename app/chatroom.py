@@ -22,8 +22,7 @@ async def create_chatroom(
     chatroom: schemas.ChatRoomCreate,
     user_id: int = Depends(get_user_id),
 ):
-    chatroom = await repository.create_chatroom(chatroom=chatroom, user_id=user_id)
-    return chatroom
+    return await repository.create_chatroom(chatroom=chatroom, user_id=user_id)
 
 
 @router.put("/chatroom/{chatroom_id}")
