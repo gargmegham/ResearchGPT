@@ -361,7 +361,7 @@ class SQLAlchemy(metaclass=SingletonMetaClass):
         return wrapper
 
     def log(self, msg) -> None:
-        self.api_logger.critical(msg)
+        self.logger.critical(msg)
 
     # TODO: add decorator
     async def _execute(
