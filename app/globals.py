@@ -1,7 +1,6 @@
 from configparser import RawConfigParser
 from pathlib import Path
 
-from app.config import Args
 
 """
 OpenAI API SECRETS
@@ -11,17 +10,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_FILE = BASE_DIR / "config/config.ini"
 config.read(CONFIG_FILE)
 
+
 """
 Main Secret Key
 """
 HOST_MAIN = config.get("main", "HOST_MAIN")
 DEBUG_MODE = config.get("main", "DEBUG_MODE")
 
+
 """
 OpenAI API SECRETS
 """
 OPENAI_API_KEY = config.get("openai", "OPENAI_API_KEY")
 OPENAI_ORG_ID = config.get("openai", "OPENAI_ORG_ID")
+
 
 """
 MySQL DB SECRETS
@@ -36,19 +38,7 @@ MYSQL_DATABASE = config.get("mysql", "MYSQL_DATABASE")
 """
 path variables
 """
-LOG_DIR: str = Args.LOG_DIR
-PROMPTS_DIR: str = Args.PROMPTS_DIR
-
-
-"""
-ResearchGPT variables
-"""
-RESEARCHGPT_WAKING_PATTERN = Args.RESEARCHGPT_WAKING_PATTERN
-RESEARCHGPT_TEXT_COLOR = Args.RESEARCHGPT_TEXT_COLOR
-if DEBUG_MODE.lower() in ["1", "true"]:
-    RESEARCHGPT_DEBUG_MODE = True
-else:
-    RESEARCHGPT_DEBUG_MODE: bool = False
+LOG_DIR: str = "./log"
 
 
 """
