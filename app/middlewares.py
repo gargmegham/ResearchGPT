@@ -11,6 +11,14 @@ from database.dataclasses import Responses_500
 
 
 class TrustedHostMiddleware:
+    """
+    Trusted Host Middleware
+        - app: ASGI application
+        - allowed_hosts: Allowed hosts
+        - except_path: Except path
+        - www_redirect: Redirect to www
+    """
+
     def __init__(
         self,
         app: ASGIApp,
@@ -40,7 +48,7 @@ class TrustedHostMiddleware:
         if self.allow_any or scope["type"] not in (
             "http",
             "websocket",
-        ):  # pragma: no cover
+        ):
             await self.app(scope, receive, send)
             return
 

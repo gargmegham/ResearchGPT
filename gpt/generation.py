@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from asyncio import sleep
 from concurrent.futures import ThreadPoolExecutor
 from itertools import zip_longest

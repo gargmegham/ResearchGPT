@@ -7,18 +7,27 @@ from app.exceptions import APIException
 
 @dataclass(frozen=True)
 class ChatGPTConfig:
-    api_url: str = "https://api.openai.com/v1/chat/completions"  # api url for openai
-    wait_for_timeout: float = 30.0  # wait for this time before timeout
-    wait_for_reconnect: float = 3.0  # wait for this time before reconnecting
+    # api url for openai
+    api_url: str = "https://api.openai.com/v1/chat/completions"
+    # wait for this time before timeout
+    wait_for_timeout: float = 30.0
+    # wait for this time before reconnecting
+    wait_for_reconnect: float = 3.0
     api_regex_pattern: re.Pattern = re.compile(r"data:\s*({.+?})\n\n")
-    extra_token_margin: int = (
-        100  # number of tokens to remove when tokens exceed token limit
-    )
+    # number of tokens to remove when tokens exceed token limit
+    extra_token_margin: int = 100
 
 
 @dataclass(frozen=True)
 class Responses_500:
-    """ """
+    """
+    Responses 500
+        - middleware_exception: Middleware exception
+        - websocket_error: Websocket error
+        - database_not_initialized: Database not initialized
+        - cache_not_initialized: Cache not initialized
+        - vectorestore_not_initialized: Vector Store not initialized
+    """
 
     middleware_exception: APIException = APIException(
         status_code=500,
@@ -53,6 +62,16 @@ class Responses_500:
 
 @dataclass
 class LoggingConfig:
+    """
+    Logging Config
+        - logger_name: Logger name
+        - logger_level: Logger level
+        - console_log_level: Console log level
+        - file_log_level: File log level
+        - file_log_name: File log name
+        - logging_format: Logging format
+    """
+
     logger_level: int = logging.DEBUG
     console_log_level: int = logging.INFO
     file_log_level: int | None = logging.DEBUG

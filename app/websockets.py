@@ -15,7 +15,7 @@ def get_user_id_websocket(websocket: WebSocket):
         xsrf = websocket.headers["XSRF-TOKEN"]
         session = websocket.headers["pubtrawlr_session"]
         if xsrf and session:
-            # TODO replace with actual authentication
+            # TODO @gargmegham replace with actual authentication
             api_logger.info(
                 f"User authenticated! XSRF-TOKEN={xsrf}; pubtrawlr_session={session};"
             )
@@ -24,11 +24,14 @@ def get_user_id_websocket(websocket: WebSocket):
         return None
 
 
-@router.websocket("/chat-socket/")
+@router.websocket("/chat")
 async def ws_chatgpt(
     websocket: WebSocket,
     user_id: int = Depends(get_user_id_websocket),
 ):
+    """
+    Websocket endpoint for chat, which is used to send and receive messages
+    """
     try:
         await websocket.accept()
         await begin_chat(

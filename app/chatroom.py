@@ -17,7 +17,7 @@ async def root():
     return {"message": "Server is running..."}
 
 
-@router.post("/chatroom/", response_model=schemas.ChatRoom)
+@router.post("/chatroom", response_model=schemas.ChatRoom)
 async def create_chatroom(
     chatroom: schemas.ChatRoomCreate,
     user_id: int = Depends(get_user_id),
@@ -46,7 +46,7 @@ async def delete_chatroom(
     return Response(status_code=200)
 
 
-@router.get("/chatroom/", response_model=list[schemas.ChatRoom])
+@router.get("/chatroom", response_model=list[schemas.ChatRoom])
 async def get_chatrooms(
     user_id: int = Depends(get_user_id),
 ):
