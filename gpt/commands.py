@@ -6,14 +6,14 @@ from typing import Any, Callable, Tuple
 
 from fastapi import WebSocket
 
-from app.exceptions import InternalServerError
-from database.schemas import MessageFromWebsocket
+from app.exceptions import ChatroomNotFound, InternalServerError
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
 from gpt.common import GptRoles, UserGptContext
+from gpt.message_handler import MessageHandler
 from gpt.message_manager import MessageManager
 from gpt.vectorstore_manager import Document, VectorStoreManager
-from gpt.websocket_manager import HandleMessage, SendToWebsocket
+from gpt.websocket_manager import SendToWebsocket
 
 
 async def create_new_chatroom(
@@ -46,7 +46,7 @@ async def get_contexts_sorted_from_recent_to_past(
     :param chatroom_ids: list of chatroom ids
     """
     if len(chatroom_ids) == 0:
-        raise Exception("chatroom_ids is empty")
+        raise ChatroomNotFound()
     else:
         # get latest chatroom
         contexts: list[UserGptContext] = await gather(
@@ -109,8 +109,6 @@ class CommandResponse:
 async def command_handler(
     callback_name: str,
     callback_args: list[str],
-    received: MessageFromWebsocket,
-    websocket: WebSocket,
     buffer: BufferedUserContext,
 ):
     callback_response, response_type = await ChatGptCommands._get_command_response(
@@ -121,22 +119,22 @@ async def command_handler(
     if response_type is ResponseType.DO_NOTHING:
         return
     elif response_type is ResponseType.HANDLE_GPT:
-        await HandleMessage.gpt(
+        await MessageHandler.gpt(
             buffer=buffer,
         )
         return
     elif response_type is ResponseType.HANDLE_USER:
-        await HandleMessage.user(
+        await MessageHandler.user(
             msg=callback_response,
             buffer=buffer,
         )
         return
     elif response_type is ResponseType.HANDLE_BOTH:
-        await HandleMessage.user(
+        await MessageHandler.user(
             msg=callback_response,
             buffer=buffer,
         )
-        await HandleMessage.gpt(
+        await MessageHandler.gpt(
             buffer=buffer,
         )
         return
@@ -147,8 +145,6 @@ async def command_handler(
             if splitted[0].startswith("/")
             else splitted[0],
             callback_args=splitted[1:],
-            received=received,
-            websocket=websocket,
             buffer=buffer,
         )
 

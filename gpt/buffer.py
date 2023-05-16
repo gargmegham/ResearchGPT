@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass, field
 
 from fastapi import WebSocket
@@ -7,9 +8,13 @@ from gpt.common import UserGptContext
 
 @dataclass
 class BufferedUserContext:
+    """A buffered user context is a user context that is stored in memory"""
+
     user_id: int
     websocket: WebSocket | None
     sorted_contexts: list[UserGptContext]
+    queue: asyncio.Queue = field(default_factory=asyncio.Queue)
+    done: asyncio.Event = field(default_factory=asyncio.Event)
     _current_context: UserGptContext = field(init=False)
 
     def __post_init__(self) -> None:
@@ -22,6 +27,7 @@ class BufferedUserContext:
         del self.sorted_contexts[index]
 
     def find_index_of_chatroom(self, chatroom_id: int) -> int | None:
+        """find index of chatroom in sorted_chatroom_ids"""
         try:
             return self.sorted_chatroom_ids.index(chatroom_id)
         except ValueError:
@@ -32,6 +38,7 @@ class BufferedUserContext:
 
     @property
     def buffer_size(self) -> int:
+        """Return the number of chatrooms in the buffer"""
         return len(self.sorted_contexts)
 
     @property
@@ -44,8 +51,10 @@ class BufferedUserContext:
 
     @property
     def sorted_chatroom_ids(self) -> list[str]:
+        """Return a list of chatroom ids in the order they were created"""
         return [context.chatroom_id for context in self.sorted_contexts]
 
     @property
     def current_user_gpt_context(self) -> UserGptContext:
+        """Return the current user gpt context"""
         return self._current_context

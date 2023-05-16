@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class ChatRoom(Base):
+class Chatroom(Base):
     """
     -- synthbot_db.chatrooms definition
         CREATE TABLE `chatrooms` (
@@ -31,3 +31,6 @@ class ChatRoom(Base):
     search = Column(String(255), default="")
 
     __table_args__ = (UniqueConstraint("user_id", "search", name="unique_user_search"),)
+
+    class Config:
+        orm_mode = True

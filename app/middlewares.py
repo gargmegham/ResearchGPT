@@ -11,6 +11,14 @@ from database.dataclasses import Responses_500
 
 
 class TrustedHostMiddleware:
+    """
+    Trusted Host Middleware
+        - app: ASGI application
+        - allowed_hosts: Allowed hosts
+        - except_path: Except path
+        - www_redirect: Redirect to www
+    """
+
     def __init__(
         self,
         app: ASGIApp,
@@ -40,7 +48,7 @@ class TrustedHostMiddleware:
         if self.allow_any or scope["type"] not in (
             "http",
             "websocket",
-        ):  # pragma: no cover
+        ):
             await self.app(scope, receive, send)
             return
 
@@ -80,8 +88,8 @@ async def authentication_middleware(request: Request, call_next):
     try:
         xsrf = request.cookies.get("XSRF-TOKEN")
         session = request.cookies.get("pubtrawlr_session")
-        if xsrf and session and request.url.path.startswith("/api"):
-            # TODO replace with actual authentication
+        if xsrf and session and request.url.path.startswith("/chatroom"):
+            # TODO @gargmegham replace with actual authentication
             TEMP_USER_ID = 25
             request.state.user_id = TEMP_USER_ID
             response = await call_next(request)

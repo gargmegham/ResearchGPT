@@ -3,7 +3,7 @@ from orjson import loads as orjson_loads
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
 
-from app.exceptions import MySQLConnectionError
+from app.exceptions import ChatroomNotFound, MySQLConnectionError
 from database import cache, db, models
 from gpt.common import (
     GptRoles,
@@ -51,9 +51,11 @@ class ChatGptCacheManager:
         chatroom_ids: list[int] = []
         try:
             async with db.session() as transaction:
-                q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
+                q = select(models.Chatroom).where(models.Chatroom.user_id == user_id)
                 result = await transaction.execute(q)
                 chatroom_ids = [chatroom.id for chatroom in result.scalars().all()]
+            if len(chatroom_ids) == 0:
+                raise ChatroomNotFound()
             return chatroom_ids
         except OperationalError:
             raise MySQLConnectionError(

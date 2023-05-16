@@ -6,6 +6,15 @@ def error_codes(status_code: int, internal_code: int) -> str:
 
 
 class APIException(Exception):
+    """
+    API Exception:
+    - status_code: HTTP status code
+    - internal_code: Internal error code
+    - msg: Message for user
+    - detail: Detail message for user
+    - ex: Exception
+    """
+
     status_code: int = 500
     internal_code: int = 0
     msg: Optional[str]
@@ -33,17 +42,21 @@ class APIException(Exception):
         lazy_format: Optional[dict[str, str]] = None,
         ex: Optional[Exception] = None,
     ) -> "APIException":
-        if (
-            self.msg is not None and self.detail is not None and lazy_format is not None
-        ):  # lazy format for msg and detail
+        if self.msg is not None and self.detail is not None and lazy_format is not None:
+            # lazy format for msg and detail
             self.msg = self.msg.format(**lazy_format)
             self.detail = self.detail.format(**lazy_format)
-        if ex is not None:  # set exception if exists
+        if ex is not None:
+            # set exception if exists
             self.ex = ex
         return self
 
 
 class MySQLConnectionError(Exception):
+    """
+    MySQL Connection Error
+    """
+
     status_code: int = 500
     internal_code: int = 1001
     msg: str = "Database Connection Error"
@@ -59,10 +72,34 @@ class MySQLConnectionError(Exception):
         )
 
 
+class ChatroomNotFound(APIException):
+    """
+    Chatroom Not Found
+    """
+
+    status_code: int = 404
+    internal_code: int = 2001
+    msg: str = "Chatroom Not Found"
+    detail: str = "Chatroom Not Found"
+
+    def __init__(self, ex: Optional[Exception] = None):
+        super().__init__(
+            status_code=self.status_code,
+            internal_code=self.internal_code,
+            msg=self.msg,
+            detail=self.detail,
+            ex=ex,
+        )
+
+
 class InternalServerError(APIException):
+    """
+    Internal Server Error
+    """
+
     status_code: int = 500
     internal_code: int = 9999
-    msg: str = "이 에러는 서버측 에러 입니다. 자동으로 리포팅 되며, 빠르게 수정하겠습니다."
+    msg: str = "This error is a server side error. It will be reported automatically, and we will fix it quickly."
     detail: str = "Internal Server Error"
 
     def __init__(self, ex: Optional[Exception] = None):
@@ -75,7 +112,11 @@ class InternalServerError(APIException):
         )
 
 
-class GptException(Exception):  # Base exception for gpt
+class GptException(Exception):
+    """
+    Base exception for gpt related exceptions
+    """
+
     def __init__(self, *, msg: str | None = None) -> None:
         self.msg = msg
         super().__init__()
@@ -130,6 +171,12 @@ class GptBreakException(GptException):
 
 
 class GptContinueException(GptException):
+    def __init__(self, *, msg: str | None = None) -> None:
+        self.msg = msg
+        super().__init__(msg=msg)
+
+
+class GptInterruptedException(GptException):
     def __init__(self, *, msg: str | None = None) -> None:
         self.msg = msg
         super().__init__(msg=msg)

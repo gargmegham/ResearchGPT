@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from app import apis, websockets
+from app import chatroom, websockets
 from app.dependencies import process_pool_executor
 from app.globals import ALLOWED, LOG_DIR, TRUSTED
 from app.logger import api_logger
@@ -50,9 +50,8 @@ def create_app() -> FastAPI:
     # Routers
     app.include_router(websockets.router, prefix="/ws", tags=["websocket"])
     app.include_router(
-        apis.router,
-        prefix="/api",
-        tags=["auth"],
+        chatroom.router,
+        tags=["chatroom"],
     )
 
     @app.on_event("startup")

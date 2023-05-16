@@ -1,4 +1,8 @@
 class SingletonMetaClass(type):
+    """
+    Singleton metaclass: only one instance of the class can be created.
+    """
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):

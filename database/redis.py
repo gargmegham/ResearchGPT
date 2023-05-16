@@ -41,7 +41,7 @@ from app.globals import (
 )
 from app.logger import api_logger
 from database.dataclasses import Responses_500
-from database.utils import SingletonMetaClass
+from database.singleton import SingletonMetaClass
 
 try:
     from starlette.concurrency import run_in_threadpool
@@ -879,7 +879,6 @@ class RedisVectorStoreRetriever(BaseRetriever, BaseModel):
 class RedisFactory(metaclass=SingletonMetaClass):
     def __init__(self):
         self._vectorstore: Redis | None = None
-        self.is_test_mode: bool = False
         self.is_initiated: bool = False
 
     def start(
@@ -893,7 +892,6 @@ class RedisFactory(metaclass=SingletonMetaClass):
     ) -> None:
         if self.is_initiated:
             return
-        self.is_test_mode = False
         redis_url = "redis://{username}:{password}@{host}:{port}/{db}".format(
             username=REDIS_USER,
             password=REDIS_PASSWORD,

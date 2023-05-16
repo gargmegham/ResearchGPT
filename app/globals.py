@@ -1,8 +1,6 @@
 from configparser import RawConfigParser
 from pathlib import Path
 
-from app.config import Args
-
 """
 OpenAI API SECRETS
 """
@@ -11,54 +9,44 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 CONFIG_FILE = BASE_DIR / "config/config.ini"
 config.read(CONFIG_FILE)
 
+
 """
 Main Secret Key
 """
-HOST_MAIN = config.get("main", "HOST_MAIN")
-DEBUG_MODE = config.get("main", "DEBUG_MODE")
+HOST_MAIN: str = config.get("main", "HOST_MAIN")
+DEBUG_MODE: str = config.get("main", "DEBUG_MODE")
+
 
 """
 OpenAI API SECRETS
 """
-OPENAI_API_KEY = config.get("openai", "OPENAI_API_KEY")
-OPENAI_ORG_ID = config.get("openai", "OPENAI_ORG_ID")
+OPENAI_API_KEY: str = config.get("openai", "OPENAI_API_KEY")
+DEFAULT_LLM_MODEL: str = config.get("openai", "DEFAULT_LLM_MODEL")
 
 """
 MySQL DB SECRETS
 """
-MYSQL_HOST = config.get("mysql", "MYSQL_HOST")
-MYSQL_USER = config.get("mysql", "MYSQL_USER")
-MYSQL_PASSWORD = config.get("mysql", "MYSQL_PASSWORD")
-MYSQL_PORT = config.get("mysql", "MYSQL_PORT")
-MYSQL_DATABASE = config.get("mysql", "MYSQL_DATABASE")
+MYSQL_HOST: str = config.get("mysql", "MYSQL_HOST")
+MYSQL_USER: str = config.get("mysql", "MYSQL_USER")
+MYSQL_PASSWORD: str = config.get("mysql", "MYSQL_PASSWORD")
+MYSQL_PORT: str = config.get("mysql", "MYSQL_PORT")
+MYSQL_DATABASE: str = config.get("mysql", "MYSQL_DATABASE")
 
 
 """
 path variables
 """
-LOG_DIR: str = Args.LOG_DIR
-PROMPTS_DIR: str = Args.PROMPTS_DIR
-
-
-"""
-ResearchGPT variables
-"""
-RESEARCHGPT_WAKING_PATTERN = Args.RESEARCHGPT_WAKING_PATTERN
-RESEARCHGPT_TEXT_COLOR = Args.RESEARCHGPT_TEXT_COLOR
-if DEBUG_MODE.lower() in ["1", "true"]:
-    RESEARCHGPT_DEBUG_MODE = True
-else:
-    RESEARCHGPT_DEBUG_MODE: bool = False
+LOG_DIR: str = "./log"
 
 
 """
 Redis variables
 """
-REDIS_HOST = config.get("redis", "REDIS_HOST")
-REDIS_PORT = config.get("redis", "REDIS_PORT")
-REDIS_DB = config.get("redis", "REDIS_DB")
-REDIS_USER = config.get("redis", "REDIS_USER")
-REDIS_PASSWORD = config.get("redis", "REDIS_PASSWORD")
+REDIS_HOST: str = config.get("redis", "REDIS_HOST")
+REDIS_PORT: str = config.get("redis", "REDIS_PORT")
+REDIS_DB: str = config.get("redis", "REDIS_DB")
+REDIS_USER: str = config.get("redis", "REDIS_USER")
+REDIS_PASSWORD: str = config.get("redis", "REDIS_PASSWORD")
 
 
 """
