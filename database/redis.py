@@ -879,7 +879,6 @@ class RedisVectorStoreRetriever(BaseRetriever, BaseModel):
 class RedisFactory(metaclass=SingletonMetaClass):
     def __init__(self):
         self._vectorstore: Redis | None = None
-        self.is_test_mode: bool = False
         self.is_initiated: bool = False
 
     def start(
@@ -893,7 +892,6 @@ class RedisFactory(metaclass=SingletonMetaClass):
     ) -> None:
         if self.is_initiated:
             return
-        self.is_test_mode = False
         redis_url = "redis://{username}:{password}@{host}:{port}/{db}".format(
             username=REDIS_USER,
             password=REDIS_PASSWORD,
