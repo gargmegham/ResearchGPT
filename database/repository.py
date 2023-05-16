@@ -10,7 +10,9 @@ async def create_chatroom(chatroom: schemas.ChatRoomCreate, user_id: int):
     """Create a new chatroom in the database"""
     try:
         async with db.session() as transaction:
-            db_chatroom = models.Chatroom(user_id=user_id, search=chatroom.search)
+            db_chatroom = models.Chatroom(
+                user_id=user_id, search=chatroom.search, title=chatroom.title
+            )
             transaction.add(db_chatroom)
             await transaction.commit()
             await transaction.refresh(db_chatroom)

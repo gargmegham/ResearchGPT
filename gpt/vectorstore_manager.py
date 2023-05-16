@@ -29,7 +29,7 @@ class VectorStoreManager:
         chunk_size: int = 500,
         chunk_overlap: int = 0,
         tokenizer_model: str = "gpt-3.5-turbo",
-        search: str = None,
+        search_term: str = None,
     ) -> list[str]:
         """Create documents from text and add them to the vectorstore."""
         texts = TokenTextSplitter(
@@ -37,9 +37,9 @@ class VectorStoreManager:
             chunk_overlap=chunk_overlap,
             model_name=tokenizer_model,
         ).split_text(text)
-        if search:
-            base64_search = base64.b64encode(search.encode("utf-8")).decode("utf-8")
-            redis_key = f"doc:search:{base64_search}"
+        if search_term:
+            base64_key = base64.b64encode(search_term.encode("utf-8")).decode("utf-8")
+            redis_key = f"doc:search:{base64_key}"
             timestamp = str(datetime.now().timestamp())
             old_timestamp = await cache.redis.get(redis_key)
             if not old_timestamp:

@@ -5,6 +5,7 @@ class ChatRoomCreate(BaseModel):
     """Chatroom create from search"""
 
     search: str
+    title: str
 
 
 class ChatRoomUpdate(BaseModel):
