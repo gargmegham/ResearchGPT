@@ -41,7 +41,7 @@ from app.globals import (
 )
 from app.logger import api_logger
 from database.dataclasses import Responses_500
-from database.utils import SingletonMetaClass
+from database.singleton import SingletonMetaClass
 
 try:
     from starlette.concurrency import run_in_threadpool

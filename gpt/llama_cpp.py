@@ -228,22 +228,3 @@ def get_llama(llama_cpp_model: "LlamaCppModel") -> LlamaCpp:
         use_mmap=llama_cpp_model.use_mmap,
         streaming=llama_cpp_model.streaming,
     )
-
-
-if __name__ == "__main__":
-    from app.dependencies import process_manager
-    from gpt.common import LLMModels, UserGptContext
-
-    m_queue = process_manager.Queue()
-    m_done = process_manager.Event()
-    llama_cpp_model: "LlamaCppModel" = LLMModels.vicuna_uncensored.value
-    llm = get_llama(llama_cpp_model)
-    llama_cpp_generation(
-        llama_cpp_model=llama_cpp_model,
-        prompt="test",
-        m_queue=m_queue,
-        m_done=m_done,
-        user_gpt_context=UserGptContext.construct_default(
-            user_id="test_user_id", chatroom_id="test_chatroom_id"
-        ),
-    )

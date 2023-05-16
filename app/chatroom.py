@@ -17,7 +17,7 @@ async def root():
     return {"message": "Server is running..."}
 
 
-@router.post("/chatroom", response_model=schemas.ChatRoom)
+@router.post("/chatroom", response_model=schemas.Chatroom)
 async def create_chatroom(
     chatroom: schemas.ChatRoomCreate,
     user_id: int = Depends(get_user_id),
@@ -46,8 +46,8 @@ async def delete_chatroom(
     return Response(status_code=200)
 
 
-@router.get("/chatroom", response_model=list[schemas.ChatRoom])
+@router.get("/chatroom", response_model=list[schemas.Chatroom])
 async def get_chatrooms(
     user_id: int = Depends(get_user_id),
 ):
-    return await repository.get_chatrooms(user_id=user_id)
+    return await repository.get_all_chatrooms(user_id=user_id)

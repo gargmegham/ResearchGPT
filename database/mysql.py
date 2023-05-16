@@ -34,7 +34,7 @@ from app.globals import (
 from app.logger import CustomLogger, logging_config
 from database.dataclasses import Responses_500
 from database.models import Base
-from database.utils import SingletonMetaClass
+from database.singleton import SingletonMetaClass
 
 
 class MySQL(metaclass=SingletonMetaClass):

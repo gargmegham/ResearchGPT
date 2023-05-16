@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-class ChatRoom(Base):
+class Chatroom(Base):
     """
     -- synthbot_db.chatrooms definition
         CREATE TABLE `chatrooms` (

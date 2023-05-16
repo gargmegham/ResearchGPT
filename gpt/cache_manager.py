@@ -51,7 +51,7 @@ class ChatGptCacheManager:
         chatroom_ids: list[int] = []
         try:
             async with db.session() as transaction:
-                q = select(models.ChatRoom).where(models.ChatRoom.user_id == user_id)
+                q = select(models.Chatroom).where(models.Chatroom.user_id == user_id)
                 result = await transaction.execute(q)
                 chatroom_ids = [chatroom.id for chatroom in result.scalars().all()]
             return chatroom_ids

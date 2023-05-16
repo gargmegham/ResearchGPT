@@ -72,6 +72,26 @@ class MySQLConnectionError(Exception):
         )
 
 
+class ChatroomNotFound(APIException):
+    """
+    Chatroom Not Found
+    """
+
+    status_code: int = 404
+    internal_code: int = 2001
+    msg: str = "Chatroom Not Found"
+    detail: str = "Chatroom Not Found"
+
+    def __init__(self, ex: Optional[Exception] = None):
+        super().__init__(
+            status_code=self.status_code,
+            internal_code=self.internal_code,
+            msg=self.msg,
+            detail=self.detail,
+            ex=ex,
+        )
+
+
 class InternalServerError(APIException):
     """
     Internal Server Error
@@ -151,6 +171,12 @@ class GptBreakException(GptException):
 
 
 class GptContinueException(GptException):
+    def __init__(self, *, msg: str | None = None) -> None:
+        self.msg = msg
+        super().__init__(msg=msg)
+
+
+class GptInterruptedException(GptException):
     def __init__(self, *, msg: str | None = None) -> None:
         self.msg = msg
         super().__init__(msg=msg)
