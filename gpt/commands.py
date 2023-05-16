@@ -6,7 +6,7 @@ from typing import Any, Callable, Tuple
 
 from fastapi import WebSocket
 
-from app.exceptions import InternalServerError, ChatroomNotFound
+from app.exceptions import ChatroomNotFound, InternalServerError
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
 from gpt.common import GptRoles, UserGptContext

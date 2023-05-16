@@ -3,7 +3,7 @@ from orjson import loads as orjson_loads
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.future import select
 
-from app.exceptions import MySQLConnectionError, ChatroomNotFound
+from app.exceptions import ChatroomNotFound, MySQLConnectionError
 from database import cache, db, models
 from gpt.common import (
     GptRoles,

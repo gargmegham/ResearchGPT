@@ -6,10 +6,10 @@ from orjson import loads as orjson_loads
 from pydantic import ValidationError
 
 from app.exceptions import (
+    ChatroomNotFound,
     GptException,
     GptInterruptedException,
     GptOtherException,
-    ChatroomNotFound,
     GptTextGenerationException,
     GptTooMuchTokenException,
     MySQLConnectionError,
