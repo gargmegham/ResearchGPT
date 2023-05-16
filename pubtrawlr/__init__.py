@@ -22,20 +22,21 @@ def process_papers(papers: list[dict]) -> str:
         return None
 
 
-def login(
+async def login(
     email: str = "meghamgarg@gmail.com", password: str = "Pubtrawlr.megham3@"
 ) -> str:
-    url = "https://app.synthbot.mindstaging.com/api/token"
-    payload = json.dumps({"email": email, "password": password})
-    headers = {"Content-Type": "application/json"}
-    response = requests.request("POST", url, headers=headers, data=payload)
-    return json.loads(response.text)["token"]
+    with requests.session() as session:
+        url = "https://app.synthbot.mindstaging.com/api/token"
+        payload = json.dumps({"email": email, "password": password})
+        headers = {"Content-Type": "application/json"}
+        response = session.request("POST", url, headers=headers, data=payload)
+        return json.loads(response.text)["token"]
 
 
 async def pubmed_context(chatroom_id: int):
     chatroom = await repository.get_chatroom(chatroom_id)
+    token = await login()
     search = chatroom.search
-    token = login()
     with requests.session() as session:
         url = "https://app.synthbot.mindstaging.com/api/abstracts/s6461d0bdb511e"
         payload = {}

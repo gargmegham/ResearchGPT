@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass, field
 
 from fastapi import WebSocket
@@ -12,6 +13,8 @@ class BufferedUserContext:
     user_id: int
     websocket: WebSocket | None
     sorted_contexts: list[UserGptContext]
+    queue: asyncio.Queue = field(default_factory=asyncio.Queue)
+    done: asyncio.Event = field(default_factory=asyncio.Event)
     _current_context: UserGptContext = field(init=False)
 
     def __post_init__(self) -> None:

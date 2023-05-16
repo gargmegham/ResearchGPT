@@ -31,3 +31,6 @@ class Chatroom(Base):
     search = Column(String(255), default="")
 
     __table_args__ = (UniqueConstraint("user_id", "search", name="unique_user_search"),)
+
+    class Config:
+        orm_mode = True

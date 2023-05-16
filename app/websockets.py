@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from app.logger import api_logger
-from gpt.stream_manager import begin_chat
+from gpt.stream_manager import ChatGptStreamManager
 from gpt.websocket_manager import SendToWebsocket
 
 router = APIRouter()
@@ -34,7 +34,7 @@ async def ws_chatgpt(
     """
     try:
         await websocket.accept()
-        await begin_chat(
+        await ChatGptStreamManager.begin_chat(
             websocket=websocket,
             user_id=user_id,
         )

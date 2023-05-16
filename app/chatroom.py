@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Response
 
 from database import repository, schemas
 
-router = APIRouter(prefix="/user")
+router = APIRouter()
 
 
 def get_user_id(request: Request):

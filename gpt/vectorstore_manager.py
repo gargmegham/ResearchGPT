@@ -2,10 +2,12 @@ import base64
 from asyncio import gather
 from datetime import datetime
 
+from fastapi.concurrency import run_in_threadpool
 from langchain.docstore.document import Document
 from langchain.text_splitter import TokenTextSplitter
 
 from database import cache
+from gpt.fileloader import read_bytes_to_text
 
 
 class VectorStoreManager:
@@ -58,3 +60,13 @@ class VectorStoreManager:
         return await gather(
             *[cache.vectorstore.asimilarity_search(query, k=k) for query in queries]
         )
+
+    @classmethod
+    async def embed_file_to_vectorstore(cls, file: bytes, filename: str) -> str:
+        """If user uploads file, embed it to vectorstore."""
+        try:
+            text: str = await run_in_threadpool(read_bytes_to_text, file, filename)
+            docs: list[str] = await VectorStoreManager.create_documents(text)
+            return f"Successfully embedded documents. You uploaded file begins with...\n\n```{docs[0][:50]}```..."
+        except Exception:
+            return "Can't embed this type of file. Try another file."

@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from typing import Any, AsyncGenerator, Callable, Optional, Type
 from urllib import parse
 
+from pymysql.err import OperationalError
 from sqlalchemy import (
     Delete,
     Result,
@@ -264,7 +265,7 @@ class SQLAlchemy(metaclass=SingletonMetaClass):
             root_url = "{dialect}+{driver}://{user}:{password}@{host}:{port}/{database}?charset=utf8mb4".format(
                 dialect="mysql",
                 driver="pymysql",
-                user="root",
+                user=MYSQL_USER,
                 password=parse.quote(MYSQL_PASSWORD),
                 host=MYSQL_HOST,
                 port=MYSQL_PORT,
@@ -290,8 +291,10 @@ class SQLAlchemy(metaclass=SingletonMetaClass):
                     )
                 Base.metadata.create_all(conn)
                 conn.commit()
-        except:
-            pass
+        except OperationalError:
+            self.log("OperationalError ::: MySQL is not ready yet.")
+        except Exception as err:
+            self.log(err)
         finally:
             if self.root_engine is not None:
                 self.root_engine.dispose()

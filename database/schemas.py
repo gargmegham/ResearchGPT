@@ -39,6 +39,7 @@ class InitMessage(BaseModel):
 
     previous_chats: list[dict] | None = None
     chatroom_ids: list[int] | None = None
+    init_callback: bool = True
 
 
 class PubMedPaper(BaseModel):
