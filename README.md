@@ -1,42 +1,38 @@
 ## ResearchGPT
 
-An AI assistant to help you with your research on various topics with data from PubMed API
+An AI assistant to help you with with your research on various topics with abstract feed which is fetched from PubMed API on PubTrawlr platform
 
-## System Requirement
-
-Tested on `MacOS` and `Ubuntu20 LTS`
-
-Python version `>= python3.11.1`
+---
 
 ## Installation
 
 1. Install poetry
 
-```
-cd $PROJECT_ROOT
-poetry install
-```
+2. Install python version >= 3.11.1
 
-## Start Server
+3. Install dependencies `poetry install`
 
-Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and [Organization ID](https://platform.openai.com/account/org-settings)
+4. Create config file from sample `cp config/config.ini.example config/config.ini`
 
-Then export to confi.ini file use config.ini.example for reference
+5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config.ini
 
-```
-cp config/config.ini.example config/config.ini
-```
+---
 
-You should see the below sample stdout
+## Local Server
+
+- Use VSCode run and debug play button, repo include .vscode/launch.json file
+- You should see the below sample stdout
 
 ```
+INFO:     Started server process [20149]
 INFO:     Waiting for application startup.
+[2023-05-17 15:03:21,196] FastAPI:CRITICAL - MySQL DB connected!
+[2023-05-17 15:03:22,103] FastAPI:CRITICAL - Redis CACHE connected!
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-ResearchGPT launched
---------------------------
 ```
 
-Note that this server is detached from your terminal, you're free to close the terminal without interrupting the service.
+---
 
-Now, open web browser and visit http://0.0.0.0:8000. Enjoy
+### You can use `curl http://127.0.0.1:8000` to check if the server is running or not, you'll get {"message":"Server is running..."} in response
+
+---

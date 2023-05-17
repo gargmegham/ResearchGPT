@@ -413,19 +413,17 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
         Query from redis vectorstore
         /query <query>
         """
-        k: int = 3
+        num_documents: int = 3
         found_document: list[Document] = (
-            await VectorStoreManager.asimilarity_search(queries=[query], k=k)
+            await VectorStoreManager.asimilarity_search(
+                queries=[query], k=num_documents
+            )
         )[0]
         found_text: str = "\n\n".join(
             [f"...{document.page_content}..." for document in found_document]
         )
         if len(found_document) > 0:
-            query = f"""Please answer my question: `{query}`\n
-And below text, enclosed in triple backticked, is everything I could find in my vectorstore:
-```
-{found_text}
-```"""
+            query = f"""please answer my question\nquestion: `{query}`\nrelated context from my vectorstore:```{found_text}```\nanswer:"""
         await MessageManager.add_message_history_safely(
             user_gpt_context=buffer.current_user_gpt_context,
             content=query,
