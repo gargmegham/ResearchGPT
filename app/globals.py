@@ -15,7 +15,8 @@ Main Secret Key
 """
 HOST_MAIN: str = config.get("main", "HOST_MAIN")
 DEBUG_MODE: str = config.get("main", "DEBUG_MODE")
-
+CIPHER_KEY: str = config.get("main", "CIPHER_KEY")
+AUTH_TOKEN: str = config.get("main", "AUTH_TOKEN")
 
 """
 OpenAI API SECRETS
