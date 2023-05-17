@@ -1,6 +1,8 @@
 [main]
 HOST_MAIN=
 DEBUG_MODE=0
+CIPHER_KEY=
+AUTH_TOKEN=spark_token
 
 [openai]
 OPENAI_API_KEY=

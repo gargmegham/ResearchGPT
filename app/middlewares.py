@@ -8,6 +8,7 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.auth import decrypt_aes_256_cbc
 from app.exceptions import InvalidToken
+from app.globals import AUTH_TOKEN
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -88,9 +89,9 @@ async def authentication_middleware(request: Request, call_next):
     """
     response = Response("Internal server error", status_code=500)
     try:
-        spark_token = request.cookies.get("spark_token")
-        if spark_token and request.url.path.startswith("/chatroom"):
-            request.state.user_id = decrypt_aes_256_cbc(spark_token)
+        auth_token = request.cookies.get(AUTH_TOKEN)
+        if auth_token and request.url.path.startswith("/chatroom"):
+            request.state.user_id = decrypt_aes_256_cbc(auth_token)
             response = await call_next(request)
         elif request.url.path in ["/", "/docs", "/openapi.json", "/redoc"]:
             response = await call_next(request)

@@ -1,8 +1,8 @@
 import json
-from datetime import datetime
 
 import requests
 
+from app.globals import AUTH_TOKEN
 from app.logger import api_logger
 from database import repository, schemas
 from gpt.vectorstore_manager import VectorStoreManager
@@ -42,7 +42,7 @@ async def pubmed_context(chatroom_id: int, incoming_headers: dict) -> None:
         url = f"https://app.synthbot.mindstaging.com/api/abstracts/{search_id}"
         payload = {}
         headers = {"Authorization": f"Bearer {token}"}
-        session.cookies.set("spark_token", incoming_headers.get("spark_token", ""))
+        session.cookies.set(AUTH_TOKEN, incoming_headers.get(AUTH_TOKEN, ""))
         response = session.request("GET", url, headers=headers, data=payload)
         response_json = json.loads(response.text)
         processed_paper_text = process_papers(papers=response_json)
