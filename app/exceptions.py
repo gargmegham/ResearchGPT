@@ -52,6 +52,26 @@ class APIException(Exception):
         return self
 
 
+class InvalidToken(APIException):
+    """
+    Invalid Token
+    """
+
+    status_code: int = 401
+    internal_code: int = 1001
+    msg: str = "Invalid Token"
+    detail: str = "Invalid Token"
+
+    def __init__(self, ex: Optional[Exception] = None):
+        super().__init__(
+            status_code=self.status_code,
+            internal_code=self.internal_code,
+            msg=self.msg,
+            detail=self.detail,
+            ex=ex,
+        )
+
+
 class MySQLConnectionError(Exception):
     """
     MySQL Connection Error

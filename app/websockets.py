@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
+from app.auth import decrypt_aes_256_cbc
+from app.exceptions import InvalidToken
 from app.logger import api_logger
 from gpt.stream_manager import ChatGptStreamManager
 from gpt.websocket_manager import SendToWebsocket
@@ -9,18 +11,12 @@ router = APIRouter()
 
 def get_user_id_websocket(websocket: WebSocket):
     """
-    Dependency to get user_id
+    Dependency to get user_id and authenticate user
     """
     try:
-        xsrf = websocket.headers["XSRF-TOKEN"]
-        session = websocket.headers["pubtrawlr_session"]
-        if xsrf and session:
-            # TODO @gargmegham replace with actual authentication
-            api_logger.info(
-                f"User authenticated! XSRF-TOKEN={xsrf}; pubtrawlr_session={session};"
-            )
-        return 25
-    except:
+        spark_token = websocket.headers["spark_token"]
+        return decrypt_aes_256_cbc(spark_token)
+    except (InvalidToken, Exception):
         return None
 
 
@@ -33,10 +29,19 @@ async def ws_chatgpt(
     Websocket endpoint for chat, which is used to send and receive messages
     """
     try:
+        if user_id is None:
+            raise InvalidToken()
         await websocket.accept()
         await ChatGptStreamManager.begin_chat(
             websocket=websocket,
             user_id=user_id,
+        )
+    except InvalidToken:
+        api_logger.error("Invalid token", exc_info=True)
+        await SendToWebsocket.message(
+            websocket=websocket,
+            msg="Invalid token. close the connection.",
+            chatroom_id=0,
         )
     except ValueError as exception:
         api_logger.error(exception, exc_info=True)

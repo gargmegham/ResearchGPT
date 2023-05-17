@@ -6,6 +6,8 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from app.auth import decrypt_aes_256_cbc
+from app.exceptions import InvalidToken
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -82,21 +84,20 @@ class TrustedHostMiddleware:
 
 async def authentication_middleware(request: Request, call_next):
     """
-    Sample cookie: XSRF-TOKEN=; pubtrawlr_session=;
+    Authentication middleware for http requests
     """
     response = Response("Internal server error", status_code=500)
     try:
-        xsrf = request.cookies.get("XSRF-TOKEN")
-        session = request.cookies.get("pubtrawlr_session")
-        if xsrf and session and request.url.path.startswith("/chatroom"):
-            # TODO @gargmegham replace with actual authentication
-            TEMP_USER_ID = 25
-            request.state.user_id = TEMP_USER_ID
+        spark_token = request.cookies.get("spark_token")
+        if spark_token and request.url.path.startswith("/chatroom"):
+            request.state.user_id = decrypt_aes_256_cbc(spark_token)
             response = await call_next(request)
         elif request.url.path in ["/", "/docs", "/openapi.json", "/redoc"]:
             response = await call_next(request)
         else:
             response = Response("Unauthorized", status_code=401)
+    except InvalidToken as err:
+        response = Response("Unauthorized", status_code=401)
     except Exception as err:
         api_logger.error(f"Error in authentication_middleware: {err}")
     finally:
