@@ -6,9 +6,6 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app.auth import decrypt_aes_256_cbc
-from app.exceptions import InvalidToken
-from app.globals import AUTH_TOKEN
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -83,23 +80,14 @@ class TrustedHostMiddleware:
             await response(scope, receive, send)
 
 
-async def authentication_middleware(request: Request, call_next):
+async def exception_handler_middleware(request: Request, call_next):
     """
-    Authentication middleware for http requests
+    Exception handler middleware for FastAPI http requests
     """
     response = Response("Internal server error", status_code=500)
     try:
-        auth_token = request.cookies.get(AUTH_TOKEN)
-        if auth_token and request.url.path.startswith("/chatroom"):
-            request.state.user_id = decrypt_aes_256_cbc(auth_token)
-            response = await call_next(request)
-        elif request.url.path in ["/", "/docs", "/openapi.json", "/redoc"]:
-            response = await call_next(request)
-        else:
-            response = Response("Unauthorized", status_code=401)
-    except InvalidToken as err:
-        response = Response("Unauthorized", status_code=401)
+        response = await call_next(request)
+        return response
     except Exception as err:
         api_logger.error(f"Error in authentication_middleware: {err}")
-    finally:
         return response

@@ -32,7 +32,7 @@ class SendToWebsocket:
             chatroom_id=buffer.current_chatroom_id,
             init=True,
         )
-        await pubmed_context(buffer.current_chatroom_id, buffer.websocket.headers)
+        await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod
     async def message(

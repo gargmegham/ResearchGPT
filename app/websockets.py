@@ -1,8 +1,5 @@
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.auth import decrypt_aes_256_cbc
-from app.exceptions import InvalidToken
-from app.globals import AUTH_TOKEN
 from app.logger import api_logger
 from gpt.stream_manager import ChatGptStreamManager
 from gpt.websocket_manager import SendToWebsocket
@@ -10,38 +7,26 @@ from gpt.websocket_manager import SendToWebsocket
 router = APIRouter()
 
 
-def get_user_id_websocket(websocket: WebSocket):
-    """
-    Dependency to get user_id and authenticate user
-    """
-    try:
-        auth_token = websocket.headers[AUTH_TOKEN]
-        return decrypt_aes_256_cbc(auth_token)
-    except (InvalidToken, Exception):
-        return None
-
-
-@router.websocket("/chat")
+@router.websocket("/chat/{user_id}")
 async def ws_chatgpt(
     websocket: WebSocket,
-    user_id: int = Depends(get_user_id_websocket),
+    user_id: str,
 ):
     """
     Websocket endpoint for chat, which is used to send and receive messages
     """
     try:
-        if user_id is None:
-            raise InvalidToken()
+        user_id = int(user_id)
         await websocket.accept()
         await ChatGptStreamManager.begin_chat(
             websocket=websocket,
             user_id=user_id,
         )
-    except InvalidToken:
-        api_logger.error("Invalid token", exc_info=True)
+    except ValueError:
+        api_logger.error("Invalid user id.", exc_info=True)
         await SendToWebsocket.message(
             websocket=websocket,
-            msg="Invalid token. close the connection.",
+            msg="Invalid user id. close the connection.",
             chatroom_id=0,
         )
     except ValueError as exception:
