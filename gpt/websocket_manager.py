@@ -45,7 +45,7 @@ class SendToWebsocket:
         model_name: str | None = None,
     ) -> None:
         """Send whole message to websocket"""
-        if websocket.client_state != 1:
+        if websocket.client_state.value != 1:
             return
         await websocket.send_json(
             MessageToWebsocket(
