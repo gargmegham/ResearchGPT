@@ -146,6 +146,8 @@ class ChatGptStreamManager:
                         await MessageHandler.gpt(
                             buffer=buffer,
                         )
+            except asyncio.CancelledError:
+                break
             except GptException as gpt_exception:
                 await cls._gpt_exception_handler(
                     buffer=buffer, gpt_exception=gpt_exception
