@@ -96,7 +96,8 @@ class ChatGptStreamManager:
                         buffer.done.set()
                 else:
                     try:
-                        await buffer.queue.put(MessageFromWebsocket(**received_json))
+                        message_from_websocket = MessageFromWebsocket(**received_json)
+                        await buffer.queue.put(message_from_websocket)
                     except ValidationError:
                         if "filename" in received_json:
                             filename = received_json["filename"]
@@ -125,7 +126,6 @@ class ChatGptStreamManager:
                         await cls._change_context(
                             buffer=buffer,
                             changed_chatroom_id=item.chatroom_id,
-                            item=item,
                         )
                     elif item.msg.startswith("/"):
                         # if user message is command, handle command
