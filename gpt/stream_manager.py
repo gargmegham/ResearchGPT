@@ -40,12 +40,12 @@ class ChatGptStreamManager:
                     ),
                 ),
             )
-        except ChatroomNotFound:
-            await SendToWebsocket.message(
-                websocket=websocket,
-                msg="You have no chatrooms. Please create one.",
-                chatroom_id="",
+            await SendToWebsocket.init(buffer=buffer)
+            await asyncio.gather(
+                cls._websocket_receiver(buffer=buffer),
+                cls._websocket_sender(buffer=buffer),
             )
+        except ChatroomNotFound:
             return
         except MySQLConnectionError:
             api_logger.error("MySQL connection error", exc_info=True)
@@ -55,12 +55,6 @@ class ChatGptStreamManager:
                 chatroom_id=buffer.current_chatroom_id,
             )
             return
-        try:
-            await SendToWebsocket.init(buffer=buffer)
-            await asyncio.gather(
-                cls._websocket_receiver(buffer=buffer),
-                cls._websocket_sender(buffer=buffer),
-            )
         except (
             GptOtherException,
             GptTextGenerationException,
