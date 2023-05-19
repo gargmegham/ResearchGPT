@@ -124,6 +124,7 @@ class ChatGptStreamManager:
                         await cls._change_context(
                             buffer=buffer,
                             changed_chatroom_id=item.chatroom_id,
+                            item=item,
                         )
                     elif item.msg.startswith("/"):
                         # if user message is command, handle command
@@ -150,7 +151,9 @@ class ChatGptStreamManager:
 
     @staticmethod
     async def _change_context(
-        buffer: BufferedUserContext, changed_chatroom_id: str
+        buffer: BufferedUserContext,
+        changed_chatroom_id: str,
+        item: MessageFromWebsocket,
     ) -> None:
         index: int | None = buffer.find_index_of_chatroom(changed_chatroom_id)
         if index is None:
@@ -163,6 +166,13 @@ class ChatGptStreamManager:
             await SendToWebsocket.init(
                 buffer=buffer,
                 send_chatroom_ids=False,
+            )
+            await MessageHandler.user(
+                msg=item.msg,
+                buffer=buffer,
+            )
+            await MessageHandler.gpt(
+                buffer=buffer,
             )
 
     @staticmethod
