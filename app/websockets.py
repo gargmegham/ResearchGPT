@@ -25,24 +25,9 @@ async def ws_chatgpt(
         )
     except ValueError:
         api_logger.error("Invalid user id.", exc_info=True)
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg="Invalid user id. close the connection.",
-            chatroom_id=0,
-        )
     except ChatroomNotFound as exception:
         api_logger.error(exception, exc_info=True)
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg=f"Chatroom not found. close the connection. ({exception})",
-            chatroom_id=0,
-        )
     except WebSocketDisconnect:
         ...
     except Exception as exception:
         api_logger.error(exception, exc_info=True)
-        await SendToWebsocket.message(
-            websocket=websocket,
-            msg=f"An unknown error has occurred. close the connection. ({exception})",
-            chatroom_id=0,
-        )
