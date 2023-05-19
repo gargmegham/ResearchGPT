@@ -9,7 +9,7 @@
       "type": "python",
       "request": "launch",
       "module": "uvicorn",
-      "args": ["main:app", "--reload"],
+      "args": ["main:app"],
       "pythonArgs": ["-Xfrozen_modules=off", "-Xdev"],
       "jinja": false,
       "justMyCode": false

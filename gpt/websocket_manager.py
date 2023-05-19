@@ -2,9 +2,8 @@ from typing import AsyncGenerator, AsyncIterator, Generator, Iterator
 
 from fastapi import WebSocket
 
-from database.schemas import InitMessage, MessageToWebsocket
+from database.schemas import MessageToWebsocket
 from gpt.buffer import BufferedUserContext
-from gpt.generation import message_history_organizer
 from pubtrawlr import pubmed_context
 
 
@@ -12,26 +11,7 @@ class SendToWebsocket:
     @staticmethod
     async def init(
         buffer: BufferedUserContext,
-        send_chatroom_ids: bool = True,
-        send_previous_chats: bool = True,
-        init_callback: bool = True,
     ) -> None:
-        """Send initial message to websocket, providing current state of user"""
-        previous_chats = message_history_organizer(
-            user_gpt_context=buffer.current_user_gpt_context,
-            send_to_stream=False,
-        )
-        assert isinstance(previous_chats, list)
-        await SendToWebsocket.message(
-            websocket=buffer.websocket,
-            msg=InitMessage(
-                chatroom_ids=buffer.sorted_chatroom_ids if send_chatroom_ids else None,
-                previous_chats=previous_chats if send_previous_chats else None,
-                init_callback=init_callback,
-            ).json(),
-            chatroom_id=buffer.current_chatroom_id,
-            init=True,
-        )
         await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod

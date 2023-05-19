@@ -35,12 +35,6 @@ class MessageHandler:
         buffer: BufferedUserContext,
     ) -> None:
         """Handle user message"""
-        if len(buffer.current_user_gpt_context.user_message_histories) == 0:
-            await SendToWebsocket.init(
-                buffer=buffer,
-                send_previous_chats=False,
-                init_callback=False,
-            )
         user_token: int = buffer.current_user_gpt_context.get_tokens_of(msg)
         if user_token > buffer.current_user_gpt_context.token_per_request:
             raise GptTooMuchTokenException(
