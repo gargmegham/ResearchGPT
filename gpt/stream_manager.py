@@ -40,6 +40,8 @@ class ChatGptStreamManager:
                     ),
                 ),
             )
+            loop = asyncio.get_event_loop()
+            loop.create_task(SendToWebsocket.init(buffer))
             await asyncio.gather(
                 cls._websocket_receiver(buffer=buffer),
                 cls._websocket_sender(buffer=buffer),
