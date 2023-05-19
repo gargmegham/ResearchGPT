@@ -17,7 +17,7 @@ class Chatroom(Base):
     search = Column(String(255), default="")
     name = Column(String(255), default="Untitled")
 
-    __table_args__ = (UniqueConstraint("user_id", "search", name="unique_user_search"),)
+    __table_args__ = (UniqueConstraint("user_id", "title", name="unique_user_title"),)
 
     class Config:
         orm_mode = True
