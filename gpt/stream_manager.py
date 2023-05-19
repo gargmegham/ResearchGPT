@@ -40,8 +40,7 @@ class ChatGptStreamManager:
                     ),
                 ),
             )
-            loop = asyncio.get_event_loop()
-            loop.create_task(SendToWebsocket.init(buffer))
+            await SendToWebsocket.init(buffer=buffer)
             await asyncio.gather(
                 cls._websocket_receiver(buffer=buffer),
                 cls._websocket_sender(buffer=buffer),
@@ -122,20 +121,11 @@ class ChatGptStreamManager:
                 elif isinstance(item, MessageFromWebsocket):
                     if item.chatroom_id != buffer.current_chatroom_id:
                         # This is a message from another chat room, interpreted as change of context, while ignoring message
-                        index: int | None = buffer.find_index_of_chatroom(
-                            item.chatroom_id
+                        await cls._change_context(
+                            buffer=buffer,
+                            changed_chatroom_id=item.chatroom_id,
+                            item=item,
                         )
-                        if index is None:
-                            raise Exception(
-                                f"Received chatroom_id {buffer.current_chatroom_id} is not in chatroom_ids {buffer.sorted_chatroom_ids}"
-                            )
-                        # if received chatroom_id is in chatroom_ids, get context from memory
-                        buffer.change_context_to(index=index)
-                        if item.msg.startswith("/query"):
-                            await SendToWebsocket.init(buffer)
-                        else:
-                            loop = asyncio.get_event_loop()
-                            loop.create_task(SendToWebsocket.init(buffer))
                     if item.msg.startswith("/"):
                         # if user message is command, handle command
                         splitted: list[str] = item.msg[1:].split(" ")
@@ -202,4 +192,22 @@ class ChatGptStreamManager:
                 websocket=buffer.websocket,
                 msg=gpt_exception.msg if gpt_exception.msg is not None else "",
                 chatroom_id=buffer.current_user_gpt_context.chatroom_id,
+            )
+
+    @staticmethod
+    async def _change_context(
+        buffer: BufferedUserContext,
+        changed_chatroom_id: str,
+    ) -> None:
+        index: int | None = buffer.find_index_of_chatroom(changed_chatroom_id)
+        if index is None:
+            raise Exception(
+                f"Received chatroom_id {buffer.current_chatroom_id} is not in chatroom_ids {buffer.sorted_chatroom_ids}"
+            )
+        else:
+            # if received chatroom_id is in chatroom_ids, get context from memory
+            buffer.change_context_to(index=index)
+            await SendToWebsocket.init(
+                buffer=buffer,
+                send_chatroom_ids=False,
             )
