@@ -1,6 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.logger import api_logger
+from app.exceptions import ChatroomNotFound
 from gpt.stream_manager import ChatGptStreamManager
 from gpt.websocket_manager import SendToWebsocket
 
@@ -29,7 +30,7 @@ async def ws_chatgpt(
             msg="Invalid user id. close the connection.",
             chatroom_id=0,
         )
-    except ValueError as exception:
+    except ChatroomNotFound as exception:
         api_logger.error(exception, exc_info=True)
         await SendToWebsocket.message(
             websocket=websocket,
