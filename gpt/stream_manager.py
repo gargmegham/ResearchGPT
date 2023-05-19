@@ -46,7 +46,6 @@ class ChatGptStreamManager:
                 msg="You have no chatrooms. Please create one.",
                 chatroom_id="",
             )
-            websocket.close()
             return
         except MySQLConnectionError:
             api_logger.error("MySQL connection error", exc_info=True)
@@ -55,7 +54,6 @@ class ChatGptStreamManager:
                 msg="MySQL connection error. Please try again.",
                 chatroom_id=buffer.current_chatroom_id,
             )
-            websocket.close()
             return
         try:
             await SendToWebsocket.init(buffer=buffer)
