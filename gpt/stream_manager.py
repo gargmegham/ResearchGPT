@@ -40,7 +40,8 @@ class ChatGptStreamManager:
                     ),
                 ),
             )
-            await SendToWebsocket.init(buffer=buffer)
+            loop = asyncio.get_event_loop()
+            loop.create_task(SendToWebsocket.init(buffer=buffer))
             await asyncio.gather(
                 cls._websocket_receiver(buffer=buffer),
                 cls._websocket_sender(buffer=buffer),
@@ -126,7 +127,7 @@ class ChatGptStreamManager:
                             changed_chatroom_id=item.chatroom_id,
                             item=item,
                         )
-                    if item.msg.startswith("/"):
+                    elif item.msg.startswith("/"):
                         # if user message is command, handle command
                         splitted: list[str] = item.msg[1:].split(" ")
                         await command_handler(
