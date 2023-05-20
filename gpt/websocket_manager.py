@@ -31,6 +31,7 @@ class SendToWebsocket:
             ).json(),
             chatroom_id=buffer.current_chatroom_id,
             init=True,
+            model_name=buffer.current_user_gpt_context.gpt_model.value,
         )
         await pubmed_context(buffer.current_chatroom_id)
 
