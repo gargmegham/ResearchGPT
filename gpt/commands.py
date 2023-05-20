@@ -453,7 +453,7 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
         """/changemodel <model>"""
         if model not in LLMModels._member_names_:
             return f"Model must be one of {', '.join(LLMModels._member_names_)}"
-        llm_model: LLMModels = LLMModels._member_map_[model]  # type: ignore
-        user_chat_context.llm_model = llm_model
+        gpt_model: LLMModels = LLMModels._member_map_[model]  # type: ignore
+        user_chat_context.gpt_model = gpt_model
         await ChatGptCacheManager.update_profile_and_model(user_chat_context)
-        return f"Model changed to {model}. Actual model: {llm_model.value.name}"
+        return f"Model changed to {model}. Actual model: {gpt_model.value.name}"
