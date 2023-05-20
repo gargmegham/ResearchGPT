@@ -6,12 +6,13 @@ class ChatRoomCreate(BaseModel):
 
     search: str
     title: str
+    name: str
 
 
 class ChatRoomUpdate(BaseModel):
     """Chatroom update title"""
 
-    title: str
+    name: str
 
 
 class Chatroom(BaseModel):
@@ -21,6 +22,7 @@ class Chatroom(BaseModel):
     user_id: int
     title: str
     search: str
+    name: str
 
     class Config:
         orm_mode = True

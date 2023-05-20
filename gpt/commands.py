@@ -439,3 +439,10 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
             text=text_to_embed,
         )
         return "Embedding successful!"
+
+    @staticmethod
+    @CommandResponse.send_message_and_stop
+    def ping() -> str:
+        """Ping! Pong!\n
+        /ping"""
+        return "pong"

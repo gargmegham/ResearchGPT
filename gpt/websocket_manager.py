@@ -32,7 +32,7 @@ class SendToWebsocket:
             chatroom_id=buffer.current_chatroom_id,
             init=True,
         )
-        await pubmed_context(buffer.current_chatroom_id, buffer.websocket.headers)
+        await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod
     async def message(
@@ -45,6 +45,8 @@ class SendToWebsocket:
         model_name: str | None = None,
     ) -> None:
         """Send whole message to websocket"""
+        if websocket.client_state.value != 1:
+            return
         await websocket.send_json(
             MessageToWebsocket(
                 msg=msg,
