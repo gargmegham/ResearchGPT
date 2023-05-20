@@ -4,6 +4,7 @@ from fastapi import WebSocket
 
 from database.schemas import InitMessage, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
+from gpt.common import OpenAIModel
 from gpt.generation import message_history_organizer
 from pubtrawlr import pubmed_context
 
@@ -22,6 +23,7 @@ class SendToWebsocket:
             send_to_stream=False,
         )
         assert isinstance(previous_chats, list)
+        current_model = buffer.current_user_gpt_context.gpt_model.value
         await SendToWebsocket.message(
             websocket=buffer.websocket,
             msg=InitMessage(
@@ -31,7 +33,9 @@ class SendToWebsocket:
             ).json(),
             chatroom_id=buffer.current_chatroom_id,
             init=True,
-            model_name=buffer.current_user_gpt_context.gpt_model.value,
+            model_name=current_model.name
+            if isinstance(current_model, OpenAIModel)
+            else None,
         )
         await pubmed_context(buffer.current_chatroom_id)
 
