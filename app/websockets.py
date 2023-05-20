@@ -1,7 +1,7 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.logger import api_logger
 from app.exceptions import ChatroomNotFound
+from app.logger import api_logger
 from gpt.stream_manager import ChatGptStreamManager
 from gpt.websocket_manager import SendToWebsocket
 

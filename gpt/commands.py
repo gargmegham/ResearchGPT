@@ -9,7 +9,7 @@ from fastapi import WebSocket
 from app.exceptions import ChatroomNotFound, InternalServerError
 from gpt.buffer import BufferedUserContext
 from gpt.cache_manager import ChatGptCacheManager
-from gpt.common import GptRoles, UserGptContext
+from gpt.common import GptRoles, LLMModels, UserGptContext
 from gpt.message_handler import MessageHandler
 from gpt.message_manager import MessageManager
 from gpt.vectorstore_manager import Document, VectorStoreManager
@@ -446,3 +446,14 @@ Start a conversation as "CODEX: Hi, what are we coding today?"
         """Ping! Pong!\n
         /ping"""
         return "pong"
+
+    @staticmethod
+    @CommandResponse.send_message_and_stop
+    async def changemodel(model: str, user_chat_context: UserGptContext) -> str:
+        """/changemodel <model>"""
+        if model not in LLMModels._member_names_:
+            return f"Model must be one of {', '.join(LLMModels._member_names_)}"
+        llm_model: LLMModels = LLMModels._member_map_[model]  # type: ignore
+        user_chat_context.llm_model = llm_model
+        await ChatGptCacheManager.update_profile_and_model(user_chat_context)
+        return f"Model changed to {model}. Actual model: {llm_model.value.name}"
