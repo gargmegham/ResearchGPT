@@ -21,7 +21,7 @@ ENV PYTHONUNBUFFERED 1
 # Install and setup poetry
 RUN pip install poetry
 RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev --no-interaction --no-ansi
+RUN poetry install --no-dev
 
 # Make port 6379 available to the world outside this container
 EXPOSE 6379
