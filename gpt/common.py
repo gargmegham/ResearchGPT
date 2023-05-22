@@ -131,32 +131,14 @@ class LLMModels(Enum):  # gpt models for openai api
         api_url="https://api.openai.com/v1/chat/completions",
         api_key=OPENAI_API_KEY,
     )
-    gpt_3_5_turbo_proxy = OpenAIModel(
-        name="gpt-3.5-turbo",
-        max_total_tokens=4096,
-        max_tokens_per_request=2048,
-        token_margin=8,
-        tokenizer=OpenAITokenizer("gpt-3.5-turbo"),
-        api_url="https://whocars123-oai-proxy.hf.space/proxy/openai/v1/chat/completions",
-        api_key="SOME_API_KEY",
-    )
     gpt_4 = OpenAIModel(
         name="gpt-4",
         max_total_tokens=8192,
         max_tokens_per_request=4096,
         token_margin=8,
-        tokenizer=OpenAITokenizer("gpt-4"),
+        tokenizer=OpenAITokenizer(),
         api_url="https://api.openai.com/v1/chat/completions",
         api_key=OPENAI_API_KEY,
-    )
-    gpt_4_proxy = OpenAIModel(
-        name="gpt-4",
-        max_total_tokens=8192,
-        max_tokens_per_request=4096,
-        token_margin=8,
-        tokenizer=OpenAITokenizer("gpt-4"),
-        api_url="https://whocars123-oai-proxy.hf.space/proxy/openai/v1/chat/completions",
-        api_key="SOME_API_KEY",
     )
     vicuna = LlamaCppModel(
         name="wizard-vicuna-13B-ggml-q5-1",

@@ -12,7 +12,7 @@ Tokenization is the process of converting a string into a list of integers.
 from abc import ABC, abstractmethod
 
 import transformers
-from tiktoken import encoding_for_model
+from tiktoken.model import get_encoding
 
 
 class BaseTokenizer(ABC):
@@ -26,8 +26,8 @@ class BaseTokenizer(ABC):
 
 
 class OpenAITokenizer(BaseTokenizer):
-    def __init__(self, model_name: str):
-        self._tokenizer = encoding_for_model(model_name)
+    def __init__(self):
+        self._tokenizer = get_encoding("cl100k_base")
 
     def encode(self, message: str, /) -> list[int]:
         return self._tokenizer.encode(message)
