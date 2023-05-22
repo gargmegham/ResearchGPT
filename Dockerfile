@@ -7,10 +7,7 @@ RUN apt-get install poppler-utils -y
 RUN apt-get install tesseract-ocr -y
 COPY requirements.txt ./
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
+COPY . /app
 
-# Make port 8000, 6379 available to the world outside this container
-EXPOSE 8000
+# Make port 6379 available to the world outside this container
 EXPOSE 6379
-
-# Run the command to start Gunicorn with Uvicorn workers
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "main:app", "-b", "0.0.0.0:8000"]

@@ -15,32 +15,22 @@ services:
     volumes:
       - redis:/data
 
-  research-gpt:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
     expose:
       - 8000
     environment:
-      - MODULE_NAME=main
-      - VARIABLE_NAME=app
-    volumes:
-      - .:/app
+      - PORT=8000
+    ports:
+      - 8000:8000
     depends_on:
       - redis
 
-  nginx:
-    image: nginx:latest
-    restart: unless-stopped
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  web:
+    build: nginx
     ports:
       - 80:80
     depends_on:
-      - research-gpt
-
-networks:
-  default:
-    external:
-      name: nginx_network
+      - api
