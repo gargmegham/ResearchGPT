@@ -12,7 +12,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Install and setup poetry
-RUN apt-get update \
+RUN apt-get update -y \
+    && apt-get install -y poppler-utils tesseract-ocr \
     && apt install -y curl netcat \
     && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
