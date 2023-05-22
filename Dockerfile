@@ -20,4 +20,4 @@ RUN poetry install --no-dev
 EXPOSE 8000
 
 # Run the command to start Gunicorn with Uvicorn workers
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "main:app", "-b", "0.0.0.0:8000", "--proxy-headers", "--forwarded-allow-ips", "117.214.153.126"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "main:app", "-b", "0.0.0.0:8000"]

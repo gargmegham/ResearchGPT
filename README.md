@@ -39,7 +39,7 @@ INFO:     Application startup complete.
 
 ## Prod Server
 
-- `sudo docker-compose -f docker-compose-local.yaml --env-file config/.env up -d`
-- `sudo docker-compose -f docker-compose-local.yaml --env-file config/.env down && sudo docker system prune --force --all`
+- `sudo docker-compose --env-file config/.env up -d`
+- `sudo docker-compose --env-file config/.env down && sudo docker system prune --force --all`
 
 ---

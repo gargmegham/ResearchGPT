@@ -10,7 +10,8 @@ services:
     ports:
       - "6379:6379"
     environment:
-      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --maxmemory 2048mb --maxmemory-policy allkeys-lru --appendonly yes
+      - REDIS_PASSWORD
+      - REDIS_DB
     volumes:
       - redis:/data
 
