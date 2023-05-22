@@ -12,8 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Install and setup poetry
-RUN pip install -U pip \
-    && apt-get update \
+RUN apt-get update \
     && apt install -y curl netcat \
     && curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 
