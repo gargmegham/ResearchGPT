@@ -13,8 +13,9 @@ RUN apt-get update -y \
     && pip install poetry
 
 # Setup the project dependencies
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev
+RUN poetry config virtualenvs.create true
+RUN poetry config virtualenvs.in-project true
+RUN poetry install
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
