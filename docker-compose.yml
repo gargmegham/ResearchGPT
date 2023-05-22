@@ -2,6 +2,7 @@ version: "3.11"
 
 volumes:
   redis:
+  research-gpt:
 
 services:
   redis:
@@ -19,7 +20,7 @@ services:
     restart: always
     build: .
     volumes:
-      - .:/server
+      - research-gpt:/server
     ports:
       - "8000:8000"
     depends_on:
