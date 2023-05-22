@@ -1,5 +1,6 @@
-from app import create_app
 import tiktoken
+
+from app import create_app
 
 # print tiktoken version
 print("tiktoken version: " + tiktoken.__version__)
