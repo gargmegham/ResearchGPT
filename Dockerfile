@@ -9,12 +9,10 @@ COPY . /server
 
 # Install system dependencies
 RUN apt-get update -y
-RUN apt-get install -y poppler-utils
-RUN apt-get install -y tesseract-ocr
-RUN pip install poetry
-RUN poetry config virtualenvs.create false
-RUN poetry install
-RUN pip freeze
+RUN apt-get install poppler-utils -y
+RUN apt-get install tesseract-ocr -y
+COPY requirements.txt ./
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 # Make port 8000, 6379 available to the world outside this container
 EXPOSE 8000
