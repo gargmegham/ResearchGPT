@@ -14,6 +14,7 @@ RUN apt-get install -y tesseract-ocr
 RUN pip install poetry
 RUN poetry config virtualenvs.create false
 RUN poetry install
+RUN pip freeze
 
 # Make port 8000, 6379 available to the world outside this container
 EXPOSE 8000
