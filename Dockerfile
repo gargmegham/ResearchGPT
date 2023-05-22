@@ -1,12 +1,6 @@
 # Use tiangolo/uvicorn-gunicorn-fastapi as parent image
 FROM tiangolo/uvicorn-gunicorn-fastapi
 
-# Set the working directory in the container to /server
-WORKDIR /server
-
-# Copy the current directory contents into the container at /server
-COPY . /server
-
 # Install system dependencies
 RUN apt-get update -y
 RUN apt-get install poppler-utils -y
