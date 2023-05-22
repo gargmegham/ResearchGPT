@@ -10,28 +10,36 @@ services:
     ports:
       - "6379:6379"
     environment:
-      - REDIS_PASSWORD
-      - REDIS_DB
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=${REDIS_DB}
     volumes:
       - redis:/data
 
   research-gpt:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - 8000
+    environment:
+      - MODULE_NAME=main
+      - VARIABLE_NAME=app
     volumes:
-      - .:/server
-    ports:
-      - "8000:8000"
+      - .:/app
     depends_on:
       - redis
-    env_file:
-      - config/.env
 
   nginx:
     image: nginx:latest
-    restart: always
-    ports:
-      - "80:80"
+    restart: unless-stopped
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - 80:80
     depends_on:
       - research-gpt
+
+networks:
+  default:
+    external:
+      name: nginx_network
