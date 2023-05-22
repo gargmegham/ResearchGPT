@@ -127,7 +127,7 @@ class LLMModels(Enum):  # gpt models for openai api
         max_total_tokens=4096,
         max_tokens_per_request=2048,
         token_margin=8,
-        tokenizer=OpenAITokenizer("gpt-3.5-turbo"),
+        tokenizer=OpenAITokenizer(),
         api_url="https://api.openai.com/v1/chat/completions",
         api_key=OPENAI_API_KEY,
     )
