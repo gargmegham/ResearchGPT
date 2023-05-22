@@ -12,7 +12,7 @@ An AI assistant to help you with with your research on various topics with abstr
 
 3. Install dependencies `poetry install`
 
-4. Create config file from sample `cp config/config.ini.example config/config.ini`
+4. Create .env file from example `cp config/.env.example config/.env`
 
 5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config.ini
 
@@ -34,5 +34,12 @@ INFO:     Application startup complete.
 ---
 
 ### You can use `curl http://127.0.0.1:8000` to check if the server is running or not, you'll get {"message":"Server is running..."} in response
+
+---
+
+## Prod Server
+
+- `sudo docker-compose -f docker-compose-local.yaml --env-file config/.env up -d`
+- `sudo docker-compose -f docker-compose-local.yaml --env-file config/.env down && sudo docker system prune --force --all`
 
 ---

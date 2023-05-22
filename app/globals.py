@@ -1,36 +1,37 @@
-from configparser import RawConfigParser
+from os import environ
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 """
-OpenAI API SECRETS
+SECRETS
 """
-config = RawConfigParser()
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONFIG_FILE = BASE_DIR / "config/config.ini"
-config.read(CONFIG_FILE)
+CONFIG_FILE = BASE_DIR / "config/.env"
+load_dotenv(dotenv_path=CONFIG_FILE)
 
 
 """
 Main Secret Key
 """
-HOST_MAIN: str = config.get("main", "HOST_MAIN")
-DEBUG_MODE: str = config.get("main", "DEBUG_MODE")
-SECRET_KEY: str = config.get("main", "SECRET_KEY")
+HOST_MAIN: str = environ.get("HOST_MAIN")
+DEBUG_MODE: str = environ.get("DEBUG_MODE")
+SECRET_KEY: str = environ.get("SECRET_KEY")
 
 """
 OpenAI API SECRETS
 """
-OPENAI_API_KEY: str = config.get("openai", "OPENAI_API_KEY")
-DEFAULT_LLM_MODEL: str = config.get("openai", "DEFAULT_LLM_MODEL")
+OPENAI_API_KEY: str = environ.get("OPENAI_API_KEY")
+DEFAULT_LLM_MODEL: str = environ.get("DEFAULT_LLM_MODEL")
 
 """
 MySQL DB SECRETS
 """
-MYSQL_HOST: str = config.get("mysql", "MYSQL_HOST")
-MYSQL_USER: str = config.get("mysql", "MYSQL_USER")
-MYSQL_PASSWORD: str = config.get("mysql", "MYSQL_PASSWORD")
-MYSQL_PORT: str = config.get("mysql", "MYSQL_PORT")
-MYSQL_DATABASE: str = config.get("mysql", "MYSQL_DATABASE")
+MYSQL_HOST: str = environ.get("MYSQL_HOST")
+MYSQL_USER: str = environ.get("MYSQL_USER")
+MYSQL_PASSWORD: str = environ.get("MYSQL_PASSWORD")
+MYSQL_PORT: str = environ.get("MYSQL_PORT")
+MYSQL_DATABASE: str = environ.get("MYSQL_DATABASE")
 
 
 """
@@ -42,11 +43,11 @@ LOG_DIR: str = "./log"
 """
 Redis variables
 """
-REDIS_HOST: str = config.get("redis", "REDIS_HOST")
-REDIS_PORT: str = config.get("redis", "REDIS_PORT")
-REDIS_DB: str = config.get("redis", "REDIS_DB")
-REDIS_USER: str = config.get("redis", "REDIS_USER")
-REDIS_PASSWORD: str = config.get("redis", "REDIS_PASSWORD")
+REDIS_HOST: str = environ.get("REDIS_HOST")
+REDIS_PORT: str = environ.get("REDIS_PORT")
+REDIS_DB: str = environ.get("REDIS_DB")
+REDIS_USER: str = environ.get("REDIS_USER")
+REDIS_PASSWORD: str = environ.get("REDIS_PASSWORD")
 
 
 """

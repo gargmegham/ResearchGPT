@@ -1,9 +1,7 @@
 .venv
-config.ini
 __pycache__
 .DS_Store
 .env
-mock_search.json
 *.db
 *.log
 jsons

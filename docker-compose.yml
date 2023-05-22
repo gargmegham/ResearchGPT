@@ -1,0 +1,37 @@
+version: "3.11"
+
+volumes:
+  redis:
+
+services:
+  redis:
+    image: "redis/redis-stack-server:latest"
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --maxmemory 2048mb --maxmemory-policy allkeys-lru --appendonly yes
+    volumes:
+      - redis:/data
+
+  research-gpt:
+    restart: always
+    build: .
+    volumes:
+      - .:/server
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    env_file:
+      - config/.env
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - research-gpt
