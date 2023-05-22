@@ -6,6 +6,12 @@ RUN apt-get update -y
 RUN apt-get install poppler-utils -y
 RUN apt-get install tesseract-ocr -y
 
+# Set the working directory to /app
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE 1
 
