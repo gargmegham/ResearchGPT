@@ -1,11 +1,12 @@
 from typing import Sequence
 
+import jwt
 from fastapi import Request, Response
 from starlette.datastructures import URL, Headers
-from starlette.requests import Request
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
+from app.globals import SECRET_KEY
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -80,14 +81,29 @@ class TrustedHostMiddleware:
             await response(scope, receive, send)
 
 
-async def exception_handler_middleware(request: Request, call_next):
+async def auth(request: Request, call_next):
     """
     Exception handler middleware for FastAPI http requests
     """
-    response = Response("Internal server error", status_code=500)
     try:
-        response = await call_next(request)
-        return response
+        headers = request.headers
+        token = headers["Authorization"].split(" ")[1]
+        jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=["HS256"],
+            options={"verify_exp": False, "verify_signature": True},
+        )
+        return await call_next(request)
+    except KeyError as err:
+        api_logger.error(f"Key error in authentication middleware: {err}")
+        return Response("Unauthorized", status_code=401)
+    except IndexError as err:
+        api_logger.error(f"Index error in authentication middleware: {err}")
+        return Response("Unauthorized", status_code=401)
+    except jwt.PyJWTError as err:
+        api_logger.error(f"Invalid token error from pyjwt\n {err}")
+        return Response("Unauthorized", status_code=401)
     except Exception as err:
-        api_logger.error(f"Error in authentication_middleware: {err}")
-        return response
+        api_logger.error(f"Error in authentication middleware: {err}")
+        return Response("Internal server error", status_code=500)

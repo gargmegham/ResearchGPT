@@ -8,7 +8,7 @@ from app import chatroom, websockets
 from app.dependencies import process_pool_executor
 from app.globals import ALLOWED, LOG_DIR, TRUSTED
 from app.logger import api_logger
-from app.middlewares import TrustedHostMiddleware, exception_handler_middleware
+from app.middlewares import TrustedHostMiddleware, auth
 from database import cache, db
 
 
@@ -32,9 +32,7 @@ def create_app() -> FastAPI:
     CORS middleware: Allowed sites only
     Trusted host middleware: Allowed host only
     """
-    app.add_middleware(
-        dispatch=exception_handler_middleware, middleware_class=BaseHTTPMiddleware
-    )
+    app.add_middleware(dispatch=auth, middleware_class=BaseHTTPMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=ALLOWED,
