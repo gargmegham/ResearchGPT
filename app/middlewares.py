@@ -6,7 +6,7 @@ from starlette.datastructures import URL, Headers
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app.globals import DEFAULT_JWT_SECRET
+from app.globals import DEFAULT_JWT_SECRET, DEBUG_MODE
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -89,10 +89,9 @@ async def auth(request: Request, call_next):
         headers = request.headers
         token = headers["Authorization"].split(" ")[1]
         try:
+            options = {"verify_signature": False} if DEBUG_MODE else {}
             decoded = jwt.decode(
-                token,
-                DEFAULT_JWT_SECRET,
-                algorithms=["HS256"],
+                token, DEFAULT_JWT_SECRET, algorithms=["HS256"], options=options
             )
         except jwt.ExpiredSignatureError as err:
             ...
