@@ -6,7 +6,7 @@ from starlette.datastructures import URL, Headers
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app.globals import DEFAULT_JWT_SECRET, DEBUG_MODE
+from app.globals import DEBUG_MODE, DEFAULT_JWT_SECRET
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 

@@ -1,23 +1,31 @@
+import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.exceptions import ChatroomNotFound
+from app.globals import DEBUG_MODE, DEFAULT_JWT_SECRET
 from app.logger import api_logger
 from gpt.stream_manager import ChatGptStreamManager
-from gpt.websocket_manager import SendToWebsocket
 
 router = APIRouter()
 
 
-@router.websocket("/chat/{user_id}")
+@router.websocket("/chat")
 async def ws_chatgpt(
     websocket: WebSocket,
-    user_id: str,
 ):
     """
     Websocket endpoint for chat, which is used to send and receive messages
     """
     try:
-        user_id = int(user_id)
+        token = websocket.query_params.get("token")
+        try:
+            options = {"verify_signature": False} if DEBUG_MODE else {}
+            decoded = jwt.decode(
+                token, DEFAULT_JWT_SECRET, algorithms=["HS256"], options=options
+            )
+        except jwt.ExpiredSignatureError as err:
+            ...
+        user_id = int(decoded["user_id"])
         await websocket.accept()
         await ChatGptStreamManager.begin_chat(
             websocket=websocket,
@@ -27,6 +35,9 @@ async def ws_chatgpt(
         api_logger.error("Invalid user id.", exc_info=True)
     except ChatroomNotFound as exception:
         api_logger.error(exception, exc_info=True)
+    except jwt.PyJWTError as err:
+        api_logger.error(f"Invalid token error from pyjwt\n {err}")
+        websocket.close()
     except WebSocketDisconnect:
         ...
     except Exception as exception:
