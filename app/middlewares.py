@@ -6,7 +6,7 @@ from starlette.datastructures import URL, Headers
 from starlette.responses import PlainTextResponse, RedirectResponse, Response
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from app.globals import SECRET_KEY
+from app.globals import DEFAULT_JWT_SECRET
 from app.logger import api_logger
 from database.dataclasses import Responses_500
 
@@ -88,13 +88,22 @@ async def auth(request: Request, call_next):
     try:
         headers = request.headers
         token = headers["Authorization"].split(" ")[1]
-        jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=["HS256"],
-            options={"verify_exp": False, "verify_signature": True},
-        )
+        try:
+            decoded = jwt.decode(
+                token,
+                DEFAULT_JWT_SECRET,
+                algorithms=["HS256"],
+            )
+        except jwt.ExpiredSignatureError as err:
+            ...
+        request.state.user_id = int(decoded["user_id"])
         return await call_next(request)
+    except ValueError as err:
+        api_logger.error(f"Value error in authentication middleware: {err}")
+        return Response("Unauthorized", status_code=401)
+    except AttributeError as err:
+        api_logger.error(f"Attribute error in authentication middleware: {err}")
+        return Response("Unauthorized", status_code=401)
     except KeyError as err:
         api_logger.error(f"Key error in authentication middleware: {err}")
         return Response("Unauthorized", status_code=401)

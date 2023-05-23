@@ -17,6 +17,7 @@ Main Secret Key
 HOST_MAIN: str = environ.get("HOST_MAIN")
 DEBUG_MODE: str = environ.get("DEBUG_MODE")
 SECRET_KEY: str = environ.get("SECRET_KEY")
+DEFAULT_JWT_SECRET = environ.get("DEFAULT_JWT_SECRET")
 
 """
 OpenAI API SECRETS
