@@ -9,7 +9,9 @@ from gpt.commands import create_new_chatroom, delete_old_chatroom
 async def create_chatroom(chatroom: schemas.ChatRoomCreate, user_id: int):
     """Create a new chatroom in the database if it doesn't exist already"""
     try:
-        old_db_chatroom = await get_chatroom_by_title(chatroom.title, user_id)
+        old_db_chatroom = await get_chatroom_by_title_and_update_search(
+            chatroom.title, user_id, chatroom.search
+        )
         if old_db_chatroom:
             return old_db_chatroom
         async with db.session() as transaction:
@@ -28,13 +30,20 @@ async def create_chatroom(chatroom: schemas.ChatRoomCreate, user_id: int):
         raise Exception(f"Error creating chatroom ::: {e}")
 
 
-async def get_chatroom_by_title(title: str, user_id: int) -> models.Chatroom | None:
+async def get_chatroom_by_title_and_update_search(
+    title: str, user_id: int, search: str
+) -> models.Chatroom | None:
     async with db.session() as transaction:
         q = select(models.Chatroom).where(
             models.Chatroom.title == title, models.Chatroom.user_id == user_id
         )
         result = await transaction.execute(q)
         chatroom = result.scalars().first()
+        if chatroom is None:
+            return None
+        chatroom.search = search
+        await transaction.commit()
+        await transaction.refresh(chatroom)
         return chatroom
 
 
