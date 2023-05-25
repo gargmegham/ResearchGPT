@@ -10,7 +10,7 @@ services:
   cache:
     image: redis/redis-stack-server:latest
     restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --loadmodule /path/to/module/src/redisearch.so --requirepass ${REDIS_PASSWORD}
     ports:
       - 6379:6379
     volumes:
