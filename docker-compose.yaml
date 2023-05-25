@@ -4,17 +4,16 @@ networks:
   research-gpt:
 
 volumes:
-  cache:
+  redis:
 
 services:
   cache:
     image: redis/redis-stack-server:latest
     restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - 6379:6379
     volumes:
-      - cache:/data
+      - redis:/data
     environment:
       REDIS_ARGS: "--maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes"
     networks:
