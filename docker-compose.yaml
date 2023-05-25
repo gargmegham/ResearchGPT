@@ -15,7 +15,7 @@ services:
     volumes:
       - redis:/data
     environment:
-      REDIS_ARGS: "--allow-empty-password --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes"
+      REDIS_ARGS: "--allow-empty-password yes --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes"
     networks:
       - research-gpt
 
