@@ -10,12 +10,13 @@ services:
   cache:
     image: redis/redis-stack-server:latest
     restart: always
+    command: redis-server --allow-empty-password yes
     ports:
       - 6379:6379
     volumes:
       - redis:/data
     environment:
-      REDIS_ARGS: "--allow-empty-password yes --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes"
+      REDIS_ARGS: "--maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes"
     networks:
       - research-gpt
 
