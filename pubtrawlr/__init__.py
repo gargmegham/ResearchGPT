@@ -28,7 +28,7 @@ async def pubmed_context(chatroom_id: int) -> None:
         search_term = chatroom.title
         search_id = chatroom.search
         with requests.session() as session:
-            url = f"https://app.synthbot.mindstaging.com/api/abstracts/{search_id}"
+            url = f"https://app.synthbot.mindstaging.com/v2/abstracts/{search_id}"
             payload = {}
             headers = {"X-PubTrawlr-Microservice-Id": SECRET_KEY}
             response = session.request("GET", url, headers=headers, data=payload)
