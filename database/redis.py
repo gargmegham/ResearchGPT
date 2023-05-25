@@ -80,7 +80,7 @@ except pkg_resources.ResolutionError:
 
 # required modules
 REDIS_REQUIRED_MODULES = [
-    {"name": "searchlight", "ver": 20400},
+    {"name": "search", "ver": 20400},
 ]
 
 
