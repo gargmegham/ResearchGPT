@@ -1,5 +1,8 @@
 version: "3.11"
 
+networks:
+  research-gpt:
+
 volumes:
   redis:
 
@@ -14,6 +17,8 @@ services:
       - redis:/data
     environment:
       REDIS_ARGS: "--appendonly yes --aof-use-rdb-preamble yes"
+    networks:
+      - research-gpt
 
   api:
     restart: unless-stopped
@@ -32,6 +37,8 @@ services:
       - 8000:8000
     depends_on:
       - cache
+    networks:
+      - research-gpt
 
   web:
     restart: always
@@ -40,3 +47,5 @@ services:
       - 80:80
     depends_on:
       - api
+    networks:
+      - research-gpt
