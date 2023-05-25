@@ -1,6 +1,17 @@
 version: "3.11"
 
+volumes:
+  redis:
+
 services:
+  cache:
+    image: redis/redis-stack-server:latest
+    restart: always
+    environment:
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --maxmemory 100mb --maxmemory-policy allkeys-lru --appendonly yes
+    volumes:
+      - redis:/data
+
   api:
     restart: unless-stopped
     build:
@@ -13,6 +24,8 @@ services:
       - PORT=8000
     ports:
       - 8000:8000
+    depends_on:
+      - cache
 
   web:
     restart: always
