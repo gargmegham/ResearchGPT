@@ -10,7 +10,7 @@ services:
   cache:
     image: redis/redis-stack-server:latest
     restart: always
-    command: redis-server --allow-empty-password yes
+    command: redis-server
     ports:
       - 6379:6379
     volumes:
