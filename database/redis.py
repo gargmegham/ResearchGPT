@@ -816,6 +816,7 @@ class Redis(VectorStore):
                 client, index_name
             ), f"Index {index_name} does not exist"
         except Exception as e:
+            api_logger.critical(f"Redis failed to connect: {redis_url}")
             raise ValueError(f"Redis failed to connect: {e}")
 
         return cls(
