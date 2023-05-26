@@ -44,7 +44,7 @@ services:
   # Nginx service
   web:
     restart: always
-    build: nginx
+    image: nginx:latest
     ports:
       - 80:80
       - 443:443
@@ -55,9 +55,11 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt # Volume for Certbot configuration
       - ./certbot/www:/var/www/certbot # Volume for Certbot webroot
+      - ./nginx:/etc/nginx/conf.d # Nginx config
     environment:
       - CERTBOT_EMAIL=${CERTBOT_EMAIL} # Replace with your email address
       - CERTBOT_DOMAIN=${CERTBOT_DOMAIN} # Replace with your domain
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"''' # reloads the newly obtained certificates every 6 hours
 
   # Use the Certbot container to obtain and renew SSL certificates
   certbot:
@@ -70,3 +72,4 @@ services:
       - web
     networks:
       - research-gpt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'" # This will check if your certificate is up for renewal every 12 hours as recommended by Let’s Encrypt.
