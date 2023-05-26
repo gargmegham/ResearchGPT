@@ -44,7 +44,7 @@ services:
   # Nginx service
   web:
     restart: always
-    image: nginx:latest
+    build: nginx
     ports:
       - 80:80
       - 443:443
@@ -55,7 +55,6 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt # Volume for Certbot configuration
       - ./certbot/www:/var/www/certbot # Volume for Certbot webroot
-      - ./nginx:/etc/nginx/conf.d # Nginx config
     environment:
       - CERTBOT_EMAIL=${CERTBOT_EMAIL} # Replace with your email address
       - CERTBOT_DOMAIN=${CERTBOT_DOMAIN} # Replace with your domain
