@@ -42,7 +42,7 @@ services:
       - research-gpt
 
   # Nginx service
-  nginx:
+  web:
     restart: always
     build: nginx
     ports:
@@ -67,6 +67,6 @@ services:
       - ./certbot/conf:/etc/letsencrypt # Mount the Certbot configuration volume
       - ./certbot/www:/var/www/certbot # Mount the Certbot webroot volume
     depends_on:
-      - nginx
+      - web
     networks:
       - research-gpt
