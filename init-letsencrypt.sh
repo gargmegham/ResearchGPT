@@ -39,7 +39,7 @@ echo
 
 
 echo "### Starting nginx ..."
-docker-compose up --force-recreate -d web
+docker-compose --env-file config/.env up --force-recreate -d web
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
