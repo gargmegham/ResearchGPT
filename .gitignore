@@ -7,4 +7,3 @@ __pycache__
 *.log
 jsons
 certbot
-init-letsencrypt.sh
