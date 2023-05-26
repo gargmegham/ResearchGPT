@@ -49,6 +49,7 @@ INFO:     Application startup complete.
 
 ## Prod Server
 
+- `sudo chmod +x init-letsencrypt.sh && sudo ./init-letsencrypt.sh`
 - `sudo docker-compose --env-file config/.env up -d --build`
 - `sudo docker-compose --env-file config/.env down && sudo docker system prune --force --all`
 
