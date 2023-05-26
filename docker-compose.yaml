@@ -56,8 +56,8 @@ services:
       - ./certbot/conf:/etc/letsencrypt # Volume for Certbot configuration
       - ./certbot/www:/var/www/certbot # Volume for Certbot webroot
     environment:
-      - CERTBOT_EMAIL=meghamgarg@gmail.com # Replace with your email address
-      - CERTBOT_DOMAIN=chat.pubtrawlr.com # Replace with your domain
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL} # Replace with your email address
+      - CERTBOT_DOMAIN=${CERTBOT_DOMAIN} # Replace with your domain
 
   # Use the Certbot container to obtain and renew SSL certificates
   certbot:
