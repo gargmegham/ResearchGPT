@@ -47,6 +47,7 @@ class ChatGptStreamManager:
                 cls._websocket_sender(buffer=buffer),
             )
         except ChatroomNotFound:
+            api_logger.error("Chatroom not found", exc_info=True)
             return
         except MySQLConnectionError:
             api_logger.error("MySQL connection error", exc_info=True)
@@ -68,8 +69,10 @@ class ChatGptStreamManager:
                 chatroom_id=buffer.current_chatroom_id,
             )
         except WebSocketDisconnect:
+            api_logger.info("Websocket disconnected")
             return
         except RuntimeError:
+            api_logger.error("Runtime error", exc_info=True)
             return
         except Exception as e:
             api_logger.error(f"Exception in chat: {e}", exc_info=True)
@@ -200,6 +203,7 @@ class ChatGptStreamManager:
         buffer: BufferedUserContext,
         changed_chatroom_id: str,
     ) -> None:
+        api_logger.info("Changing context....")
         index: int | None = buffer.find_index_of_chatroom(changed_chatroom_id)
         if index is None:
             raise Exception(
