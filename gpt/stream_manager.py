@@ -201,6 +201,7 @@ class ChatGptStreamManager:
         changed_chatroom_id: str,
     ) -> None:
         index: int | None = buffer.find_index_of_chatroom(changed_chatroom_id)
+        api_logger.info("Changing context......")
         if index is None:
             raise Exception(
                 f"Received chatroom_id {buffer.current_chatroom_id} is not in chatroom_ids {buffer.sorted_chatroom_ids}"

@@ -7,6 +7,7 @@ from gpt.buffer import BufferedUserContext
 from gpt.common import OpenAIModel
 from gpt.generation import message_history_organizer
 from pubtrawlr import pubmed_context
+from app.logger import api_logger
 
 
 class SendToWebsocket:
@@ -37,6 +38,7 @@ class SendToWebsocket:
             if isinstance(current_model, OpenAIModel)
             else None,
         )
+        api_logger.info("Calling pubmed_context......")
         await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod

@@ -31,7 +31,9 @@ async def pubmed_context(chatroom_id: int) -> None:
             url = f"https://app.synthbot.mindstaging.com/v2/abstracts/{search_id}"
             payload = {}
             headers = {"X-PubTrawlr-Microservice-Id": SECRET_KEY}
+            api_logger.info("Calling abstracts api......")
             response = session.request("GET", url, headers=headers, data=payload)
+            api_logger.info(f"Abstracts api res...... {response.status_code}")
             response_json = json.loads(response.text)
             processed_paper_text = process_papers(papers=response_json)
             if processed_paper_text:

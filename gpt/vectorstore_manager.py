@@ -8,6 +8,7 @@ from langchain.text_splitter import TokenTextSplitter
 
 from database import cache
 from gpt.fileloader import read_bytes_to_text
+from app.logger import api_logger
 
 
 class VectorStoreManager:
@@ -32,6 +33,7 @@ class VectorStoreManager:
         search_term: str = None,
     ) -> list[str]:
         """Create documents from text and add them to the vectorstore."""
+        api_logger.info("Called create_documents......")
         texts = TokenTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
@@ -43,12 +45,16 @@ class VectorStoreManager:
             timestamp = str(datetime.now().timestamp())
             old_timestamp = await cache.redis.get(redis_key)
             if not old_timestamp:
+                api_logger.info("Adding search_term to redis......")
                 await cache.redis.set(redis_key, timestamp)
             elif float(timestamp) - float(old_timestamp) > 604800:
+                api_logger.info("> old_timestamp......")
                 await cache.redis.set(redis_key, timestamp)
                 return texts
             else:
+                api_logger.info("......")
                 return texts
+        api_logger.info("Adding texts to vectorstore......")
         await cache.vectorstore.aadd_texts(texts=texts)
         return texts
 
