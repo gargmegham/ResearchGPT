@@ -212,7 +212,7 @@ class ChatGptStreamManager:
         else:
             # if received chatroom_id is in chatroom_ids, get context from memory
             buffer.change_context_to(index=index)
-            await SendToWebsocket.init(
-                buffer=buffer,
-                send_chatroom_ids=False,
+            loop = asyncio.get_event_loop()
+            loop.create_task(
+                SendToWebsocket.init(buffer=buffer, send_chatroom_ids=False)
             )
