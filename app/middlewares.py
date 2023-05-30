@@ -87,7 +87,10 @@ async def auth(request: Request, call_next):
     """
     try:
         headers = request.headers
-        token = headers["Authorization"].split(" ")[1]
+        try:
+            token = headers["Authorization"].split(" ")[1]
+        except KeyError:
+            token = headers["authorization"].split(" ")[1]
         try:
             options = {"verify_signature": False} if DEBUG_MODE else {}
             decoded = jwt.decode(
