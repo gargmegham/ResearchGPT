@@ -11,7 +11,6 @@ An AI assistant to help you with with your research on various topics with abstr
 ![mobile-main](https://github.com/gargmegham/ResearchGPT/assets/95271253/6e3bbe63-bc4c-44c4-898c-e52d3bbddd59)
 ![mobile-sidebar](https://github.com/gargmegham/ResearchGPT/assets/95271253/62fdfdd0-f875-4d5a-bcb6-0e893c9c37e3)
 
-
 ---
 
 ## Installation
@@ -49,7 +48,7 @@ INFO:     Application startup complete.
 
 ## Prod Server
 
-- `sudo chmod +x init-letsencrypt.sh && sudo ./init-letsencrypt.sh`
+- `sudo chmod +x certbot.sh && sudo ./certbot.sh`
 - `sudo docker-compose --env-file config/.env up -d --build`
 - `sudo docker-compose --env-file config/.env down && sudo docker system prune --force --all`
 
