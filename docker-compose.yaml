@@ -16,7 +16,7 @@ services:
     volumes:
       - redis:/data
     environment:
-      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --maxmemory 4gb --maxmemory-policy allkeys-lru --appendonly yes"
+      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --maxmemory 2gb --maxmemory-policy allkeys-lru --appendonly yes"
     networks:
       - research-gpt
 
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+    command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 0
     expose:
       - 8000
     environment:
