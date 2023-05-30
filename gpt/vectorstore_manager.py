@@ -35,7 +35,7 @@ class VectorStoreManager:
         texts = TokenTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            model_name=tokenizer_model,
+            encoding_name="cl100k_base",
         ).split_text(text)
         if search_term:
             base64_key = base64.b64encode(search_term.encode("utf-8")).decode("utf-8")

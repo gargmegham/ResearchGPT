@@ -49,7 +49,8 @@ INFO:     Application startup complete.
 ## Prod Server
 
 - `sudo chmod +x certbot.sh && sudo ./certbot.sh`
-- `sudo docker-compose --env-file config/.env up -d --build`
+- `sudo docker-compose --env-file config/.env up -d --build --remove-orphans`
 - `sudo docker-compose --env-file config/.env down && sudo docker system prune --force --all`
+- `sudo docker exec -it researchgpt_api_1 cat log/app.log`
 
 ---
