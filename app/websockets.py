@@ -18,6 +18,7 @@ async def ws_chatgpt(
     """
     try:
         token = websocket.query_params.get("token")
+        chatroom_id = int(websocket.query_params.get("chatroom_id"))
         try:
             options = {"verify_signature": False} if DEBUG_MODE else {}
             decoded = jwt.decode(
@@ -30,6 +31,7 @@ async def ws_chatgpt(
         await ChatGptStreamManager.begin_chat(
             websocket=websocket,
             user_id=user_id,
+            chatroom_id=chatroom_id,
         )
     except ValueError:
         api_logger.error("Invalid user id.", exc_info=True)

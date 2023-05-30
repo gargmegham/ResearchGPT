@@ -11,6 +11,7 @@ class BufferedUserContext:
     """A buffered user context is a user context that is stored in memory"""
 
     user_id: int
+    initial_chatroom_id: int
     websocket: WebSocket | None
     sorted_contexts: list[UserGptContext]
     queue: asyncio.Queue = field(default_factory=asyncio.Queue)
@@ -18,7 +19,8 @@ class BufferedUserContext:
     _current_context: UserGptContext = field(init=False)
 
     def __post_init__(self) -> None:
-        self._current_context = self.sorted_contexts[0]
+        index: int | None = self.find_index_of_chatroom(self.initial_chatroom_id)
+        self._current_context = self.sorted_contexts[index if index is not None else 0]
 
     def insert_context(self, user_gpt_context: UserGptContext, index: int = 0) -> None:
         self.sorted_contexts.insert(index, user_gpt_context)

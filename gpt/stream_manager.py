@@ -28,11 +28,14 @@ from gpt.websocket_manager import SendToWebsocket
 
 class ChatGptStreamManager:
     @classmethod
-    async def begin_chat(cls, websocket: WebSocket, user_id: int) -> None:
+    async def begin_chat(
+        cls, websocket: WebSocket, user_id: int, chatroom_id: int
+    ) -> None:
         try:
             buffer: BufferedUserContext = BufferedUserContext(
                 user_id=user_id,
                 websocket=websocket,
+                initial_chatroom_id=chatroom_id,
                 sorted_contexts=await get_contexts_sorted_from_recent_to_past(
                     user_id=user_id,
                     chatroom_ids=await ChatGptCacheManager.get_all_chatrooms(
