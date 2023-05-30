@@ -38,5 +38,5 @@ async def pubmed_context(chatroom_id: int) -> None:
                 await VectorStoreManager.create_documents(
                     processed_paper_text, search_term=search_term
                 )
-    except:
-        pass
+    except Exception as err:
+        api_logger.error(f"Error in pubmed_context: {err}")
