@@ -26,7 +26,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --timeout 0
     expose:
       - 8000
     environment:
@@ -41,6 +40,27 @@ services:
     networks:
       - research-gpt
 
+  # API service for the GPT research
+  ws:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001 --timeout 0
+    expose:
+      - 8001
+    environment:
+      - PORT=8001
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    ports:
+      - 8001:8001
+    depends_on:
+      - cache
+    networks:
+      - research-gpt
+
   # Nginx service
   web:
     restart: always
@@ -50,6 +70,7 @@ services:
       - 443:443
     depends_on:
       - api
+      - ws
     networks:
       - research-gpt
     volumes:
