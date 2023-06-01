@@ -23,7 +23,7 @@ An AI assistant to help you with with your research on various topics with abstr
 
 4. Create .env file from example `cp config/.env.example config/.env`
 
-5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config.ini
+5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config/.env
 
 ---
 
