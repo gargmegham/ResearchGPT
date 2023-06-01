@@ -6,7 +6,7 @@ from database.schemas import InitMessage, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
 from gpt.common import OpenAIModel
 from gpt.generation import message_history_organizer
-from pubtrawlr import pubmed_context
+from gpt.pubmed import pubmed_context
 
 
 class SendToWebsocket:

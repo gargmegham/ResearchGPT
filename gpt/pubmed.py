@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from app.globals import SECRET_KEY
+from app.globals import PUBMED_API_AUTH_HEADER, PUBMED_API_ENDPOINT, SECRET_KEY
 from app.logger import api_logger
 from database import repository, schemas
 from gpt.vectorstore_manager import VectorStoreManager
@@ -28,9 +28,9 @@ async def pubmed_context(chatroom_id: int) -> None:
         search_term = chatroom.title
         search_id = chatroom.search
         with requests.session() as session:
-            url = f"https://app.synthbot.mindstaging.com/v2/abstracts/{search_id}"
+            url = f"{PUBMED_API_ENDPOINT}{search_id}"
             payload = {}
-            headers = {"X-PubTrawlr-Microservice-Id": SECRET_KEY}
+            headers = {PUBMED_API_AUTH_HEADER: SECRET_KEY}
             response = session.request("GET", url, headers=headers, data=payload)
             response_json = json.loads(response.text)
             processed_paper_text = process_papers(papers=response_json)
