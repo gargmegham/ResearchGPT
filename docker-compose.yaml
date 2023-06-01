@@ -5,8 +5,25 @@ networks:
 
 volumes:
   redis:
+  mysql:
 
 services:
+  database:
+    image: mysql
+    restart: always
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - research-gpt
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+
   # Redis cache service
   cache:
     image: redis/redis-stack-server:latest
@@ -37,6 +54,7 @@ services:
       - 8000:8000
     depends_on:
       - cache
+      - database
     networks:
       - research-gpt
 
@@ -58,6 +76,7 @@ services:
       - 8001:8001
     depends_on:
       - cache
+      - database
     networks:
       - research-gpt
 
