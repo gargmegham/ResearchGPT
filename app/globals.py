@@ -61,13 +61,8 @@ Trusted host variables for TrustedHostMiddleware
 Allowed sites variables for CORSMiddleware
 """
 if DEBUG_MODE.lower() in ["1", "true"]:
-    TRUSTED: list[str] = ["*"]
     ALLOWED: list[str] = ["*"]
 else:
-    TRUSTED: list[str] = [
-        HOST_MAIN,
-        "localhost",
-    ]
     ALLOWED: list[str] = [
         HOST_MAIN,
         "localhost",

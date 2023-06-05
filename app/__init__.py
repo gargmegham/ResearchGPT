@@ -6,9 +6,9 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app import chatroom, websockets
 from app.dependencies import process_pool_executor
-from app.globals import ALLOWED, LOG_DIR, TRUSTED
+from app.globals import ALLOWED, LOG_DIR
 from app.logger import api_logger
-from app.middlewares import TrustedHostMiddleware, auth
+from app.middlewares import auth
 from database import cache, db
 
 
@@ -39,11 +39,6 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-    )
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=TRUSTED,
-        except_path=["/docs", "/redoc", "/openapi.json"],
     )
     # Routers
     app.include_router(websockets.router, prefix="/ws", tags=["websocket"])
