@@ -65,12 +65,10 @@ if DEBUG_MODE.lower() in ["1", "true"]:
     ALLOWED: list[str] = ["*"]
 else:
     TRUSTED: list[str] = [
-        f"*.{HOST_MAIN}",
         HOST_MAIN,
         "localhost",
     ]
     ALLOWED: list[str] = [
-        f"*.{HOST_MAIN}",
         HOST_MAIN,
         "localhost",
     ]
