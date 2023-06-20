@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "research gpt"
 version = "0.1.0"
-description = "An AI assistant to help you with your research on various topics with data from PubMed API"
+description = "An AI assistant to help you with your research"
 authors = ["Megham Garg <meghamgarg@gmail.com>"]
 readme = "README.md"
 
