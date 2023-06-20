@@ -2,7 +2,7 @@ import jwt
 from fastapi import Request, Response
 from starlette.responses import Response
 
-from app.globals import DEBUG_MODE, DEFAULT_JWT_SECRET
+from app.globals import DEBUG_MODE, JWT_SECRET
 from app.logger import api_logger
 
 
@@ -19,7 +19,7 @@ async def auth(request: Request, call_next):
         try:
             options = {"verify_signature": False} if DEBUG_MODE else {}
             decoded = jwt.decode(
-                token, DEFAULT_JWT_SECRET, algorithms=["HS256"], options=options
+                token, JWT_SECRET, algorithms=["HS256"], options=options
             )
         except jwt.ExpiredSignatureError as err:
             ...

@@ -2,7 +2,7 @@ import jwt
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.exceptions import ChatroomNotFound
-from app.globals import DEBUG_MODE, DEFAULT_JWT_SECRET
+from app.globals import DEBUG_MODE, JWT_SECRET
 from app.logger import api_logger
 from gpt.stream_manager import ChatGptStreamManager
 
@@ -22,7 +22,7 @@ async def ws_chatgpt(
         try:
             options = {"verify_signature": False} if DEBUG_MODE else {}
             decoded = jwt.decode(
-                token, DEFAULT_JWT_SECRET, algorithms=["HS256"], options=options
+                token, JWT_SECRET, algorithms=["HS256"], options=options
             )
         except jwt.ExpiredSignatureError as err:
             ...

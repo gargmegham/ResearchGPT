@@ -16,8 +16,7 @@ Main Secret Key
 """
 HOST_MAIN: str = environ.get("HOST_MAIN")
 DEBUG_MODE: str = environ.get("DEBUG_MODE")
-SECRET_KEY: str = environ.get("SECRET_KEY")
-DEFAULT_JWT_SECRET = environ.get("DEFAULT_JWT_SECRET")
+JWT_SECRET = environ.get("JWT_SECRET")
 
 """
 OpenAI API SECRETS
@@ -50,11 +49,6 @@ REDIS_DB: str = environ.get("REDIS_DB")
 REDIS_USER: str = environ.get("REDIS_USER")
 REDIS_PASSWORD: str = environ.get("REDIS_PASSWORD")
 
-"""
-PUBMED
-"""
-PUBMED_API_ENDPOINT: str = environ.get("PUBMED_API_ENDPOINT")
-PUBMED_API_AUTH_HEADER: str = environ.get("PUBMED_API_AUTH_HEADER")
 
 """
 Trusted host variables for TrustedHostMiddleware

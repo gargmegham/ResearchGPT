@@ -6,7 +6,6 @@ from database.schemas import InitMessage, MessageToWebsocket
 from gpt.buffer import BufferedUserContext
 from gpt.common import OpenAIModel
 from gpt.generation import message_history_organizer
-from gpt.pubmed import pubmed_context
 
 
 class SendToWebsocket:
@@ -37,7 +36,6 @@ class SendToWebsocket:
             if isinstance(current_model, OpenAIModel)
             else None,
         )
-        await pubmed_context(buffer.current_chatroom_id)
 
     @staticmethod
     async def message(
