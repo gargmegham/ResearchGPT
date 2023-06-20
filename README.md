@@ -1,6 +1,6 @@
 ## ResearchGPT
 
-An AI assistant to help you with with your research on various topics with abstract feed which is fetched from PubMed API on PubTrawlr platform
+An AI assistant to help you with with your research on various topics with abstract feed which is fetched from PubMed API
 
 ---
 
