@@ -6,10 +6,17 @@ An AI assistant to help you with with your research
 
 ## UI Screenshots
 
-![loaded state](https://github.com/gargmegham/ResearchGPT/assets/95271253/d28187c2-959b-4671-b27c-93a94ede20f5)
-![loading state](https://github.com/gargmegham/ResearchGPT/assets/95271253/e7efbbda-e39a-45c8-a541-925fd8211d67)
-![mobile-main](https://github.com/gargmegham/ResearchGPT/assets/95271253/6e3bbe63-bc4c-44c4-898c-e52d3bbddd59)
-![mobile-sidebar](https://github.com/gargmegham/ResearchGPT/assets/95271253/62fdfdd0-f875-4d5a-bcb6-0e893c9c37e3)
+<table>
+  <tr>
+    <td><img src="https://github.com/gargmegham/ResearchGPT/assets/95271253/d28187c2-959b-4671-b27c-93a94ede20f5" alt="loaded state"></td>
+    <td><img src="https://github.com/gargmegham/ResearchGPT/assets/95271253/e7efbbda-e39a-45c8-a541-925fd8211d67" alt="loading state"></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/gargmegham/ResearchGPT/assets/95271253/6e3bbe63-bc4c-44c4-898c-e52d3bbddd59" alt="mobile-main"></td>
+    <td><img src="https://github.com/gargmegham/ResearchGPT/assets/95271253/62fdfdd0-f875-4d5a-bcb6-0e893c9c37e3" alt="mobile-sidebar"></td>
+  </tr>
+</table>
+
 
 ---
 
