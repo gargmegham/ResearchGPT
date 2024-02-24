@@ -1,0 +1,176 @@
+/* Write your global styles here, in PostCSS syntax */
+
+@tailwind base;
+
+:root {
+	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
+
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
+
+	--fancyFont: 'jubilat', serif;
+	--baseFont: 'open-sans', sans-serif;
+	--light: #efefe1;
+	--dark: #30363f;
+	--blueVar: #002739;
+	--redVar: #ff2b2b;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+body {
+	@apply m-0 bg-light text-navy;
+}
+
+h2 {
+	@apply my-4 font-sans text-4xl font-bold text-navy;
+}
+
+h3 {
+	@apply my-4 font-sans text-2xl font-bold text-navy;
+}
+
+p {
+	@apply my-4;
+	font-weight: 400;
+}
+
+.chart {
+	@apply flex justify-center;
+	background: #fff;
+}
+
+.js-plotly-plot .plotly .modebar-group {
+	@apply flex;
+}
+
+.dt-buttons {
+	@apply clear-both flex items-stretch gap-1 py-2;
+}
+.dt-buttons button {
+	color: #fff;
+	border-radius: 0.3rem;
+	flex: 1 1 auto;
+	@apply bg-pub-blue-700 p-2 hover:bg-pub-blue-900;
+}
+.dataTables_wrapper {
+	@apply p-3;
+	font-size: 14px;
+	a {
+		text-decoration: underline;
+		@apply text-pub-blue-700 hover:text-pub-blue-900;
+	}
+}
+
+@tailwind components;
+
+@tailwind utilities;
+
+/* overrides when it gets embedded in the site and conflicts
+   with bootstrap... what a mess */
+
+#app .flex {
+	flex-wrap: nowrap;
+}
+#app .flex-wrap {
+	flex-wrap: wrap;
+}
+#app input[type='search'] {
+	border: solid 2px rgb(115, 115, 115);
+}
+
+#app #autocompletes li {
+	margin: 0;
+}
+
+.pt-flex {
+	display: flex;
+}
+
+.pt-visual-card {
+	@apply overflow-x-hidden rounded-lg bg-white p-3;
+}
+
+/* creative commons embed with Bootstrap overrides */
+
+#cc_data {
+	max-height: 680px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	background: #fff;
+}
+#cc_data .btn-primary {
+	background-color: #008eaa;
+	border-color: #008eaa;
+	border-radius: 6px;
+	padding: 0.5em 1em;
+	margin: 1em;
+	display: inline-block;
+	color: #fff;
+}
+#cc_data h5 {
+	margin: 1em 0.5em;
+	font-weight: bold;
+	font-size: 18px;
+}
+#cc_data h5 a {
+	color: #008eaa;
+}
+
+#cc_data h6 {
+	font-size: 14px;
+	text-align: center;
+}
+#cc_data h6.text-muted {
+	opacity: 0.5;
+	font-size: 12px;
+}
+
+#cc_data .row {
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#cc_data .col-md-4 {
+	padding: 10px;
+	width: 100%;
+}
+
+#cc_data .card {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+#cc_data .card .card-body.p-1.px-3.text-center {
+	margin-top: auto;
+}
+
+#cc_data .text-center.mt-2.pb-2 {
+	padding-bottom: 1em;
+	margin-top: 1em;
+}
+#cc_data .text-center.mt-2.pb-2 img {
+	margin: auto;
+}
+
+@media (min-width: 768px) {
+	#cc_data .col-md-4 {
+		width: 50%;
+	}
+}
+@media (min-width: 1024px) {
+	#cc_data .col-md-4 {
+		width: 25%;
+	}
+}

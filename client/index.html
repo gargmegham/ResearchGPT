@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<link rel="icon" type="image/svg+xml" href="/vite.svg" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>ResearchGPT</title>
+	<link rel="stylesheet" href="https://use.typekit.net/wns7fnj.css" />
+	<script src="https://d3js.org/d3.v3.min.js"></script>
+	<script src="https://rawgit.com/jasondavies/d3-cloud/master/build/d3.layout.cloud.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+	<style>
+		.fake-header {
+			height: 60px;
+			background: #ccc;
+		}
+
+		@media (min-width: 1000px) {
+			.fake-header {
+				height: 80px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="fake-header"></div>
+	<div id="app"></div>
+	<script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
