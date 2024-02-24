@@ -30,7 +30,7 @@ An AI assistant to help you with with your research
 4. Create .env file from example `cp config/.env.example config/.env`
 5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config/.env
 
-### Local Server
+#### Local Server
 
 - Use VSCode run and debug play button, repo include .vscode/launch.json file
 - You should see the below sample stdout
@@ -46,7 +46,7 @@ INFO: Application startup complete.
 
 - You can use `curl http://127.0.0.1:8000` to check if the server is running or not, you'll get {"message":"Server is running..."} in response
 
-### Prod Server
+#### Prod Server
 
 - `sudo chmod +x certbot.sh && sudo ./certbot.sh`
 - `sudo docker-compose --env-file config/.env up -d --build --remove-orphans`
@@ -59,10 +59,10 @@ INFO: Application startup complete.
 
 A brief description of the project.
 
-## Getting Started
+#### Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-### Prerequisites
+#### Prerequisites
 
 What things you need to install the software and how to install them.
