@@ -1,6 +1,6 @@
-## ResearchGPT
+# ResearchGPT
 
-An AI assistant to help you with with your research
+An AI-powered research assistant that lets you create persistent chat sessions, upload documents, and query GPT models in real time. Built with FastAPI, Svelte, MySQL, and Redis.
 
 ---
 
@@ -17,52 +17,193 @@ An AI assistant to help you with with your research
   </tr>
 </table>
 
+---
+
+## Features
+
+- **Persistent chatrooms** — create, rename, and delete research sessions; history is saved per user
+- **Streaming responses** — real-time token streaming over WebSocket
+- **Document upload** — attach PDFs, text files, and images (OCR via Tesseract); content is chunked and embedded into a vector store for semantic retrieval
+- **Multiple LLM backends** — OpenAI GPT-3.5/GPT-4 by default; local Llama models supported via llama-cpp-python
+- **Research visualizations** — topic graphs (UMAP), bar/line charts, word clouds, network graphs, and article/author/journal views
+- **Command system** — messages beginning with `/` trigger special handlers
+- **JWT authentication** — token-based auth with AES-256-CBC encryption on sensitive data
+- **Token usage limits** — per-request token caps to control API costs
 
 ---
+
+## Architecture
+
+```
+ResearchGPT/
+├── server/          # Python / FastAPI backend
+│   ├── app/         # HTTP routes, WebSocket endpoint, middleware, auth
+│   ├── database/    # SQLAlchemy (MySQL) models, Redis client, repository layer
+│   ├── gpt/         # LLM integration, streaming, document embeddings, commands
+│   ├── nginx/       # Reverse-proxy config and Dockerfile
+│   ├── main.py      # Application entry point
+│   ├── docker-compose.yaml
+│   └── pyproject.toml
+└── client/          # Svelte / TypeScript frontend
+    └── src/
+        ├── lib/pages/       # Home and Assistant pages
+        ├── lib/components/  # Chat UI, message display, visualizations
+        ├── lib/views/       # Articles, Journals, Authors, Resources
+        └── lib/apis/        # HTTP + WebSocket API calls
+```
+
+**Backend services (via Docker Compose)**
+
+| Service | Role | Port |
+|---------|------|------|
+| `api` | FastAPI HTTP server | 8000 |
+| `ws` | FastAPI WebSocket worker | 8001 |
+| `web` | Nginx reverse proxy + SSL | 80 / 443 |
+| `database` | MySQL | 3306 |
+| `cache` | Redis (session cache + vector store) | 6379 |
+| `certbot` | Let's Encrypt certificate renewal | — |
+
+HTTP traffic routes to `api`; WebSocket connections (`/ws/`) route to the dedicated `ws` worker.
+
+---
+
+## Tech Stack
+
+**Server**
+- Python 3.11+, FastAPI, Uvicorn / Gunicorn
+- SQLAlchemy 2 (async) + aiomysql
+- Redis + LangChain vector store (embeddings)
+- OpenAI API; llama-cpp-python for local models
+- PyJWT, cryptography (AES-256-CBC)
+- pdf2image, pytesseract, unstructured (document parsing)
+- tiktoken (token counting)
+
+**Client**
+- Svelte 3 + SvelteKit, TypeScript, Vite
+- Tailwind CSS
+- Lucide Svelte icons
+- vis-network (graph visualizations)
 
 ---
 
 ## Server Setup
 
-1. Install poetry
-2. Install python version >= 3.11.1
-3. Install dependencies `poetry install`
-4. Create .env file from example `cp config/.env.example config/.env`
-5. Visit openai to obtain your [API key](https://platform.openai.com/account/api-keys) and then place it after `OPENAI_API_KEY=` in config/.env
+### Prerequisites
 
-#### Local Server
+- Python 3.11.1+
+- [Poetry](https://python-poetry.org/docs/#installation)
+- MySQL and Redis instances (or use Docker Compose for everything)
+- An [OpenAI API key](https://platform.openai.com/account/api-keys)
 
-- Use VSCode run and debug play button, repo include .vscode/launch.json file
-- You should see the below sample stdout
+### Install dependencies
+
+```bash
+cd server
+poetry install
+```
+
+### Configure environment
+
+```bash
+cp config/.env.example config/.env
+```
+
+Edit `config/.env` and fill in at minimum:
+
+```env
+OPENAI_API_KEY=sk-...
+JWT_SECRET=<random secret>
+MYSQL_HOST=localhost
+MYSQL_USER=admin
+MYSQL_PASSWORD=...
+MYSQL_DATABASE=researchgpt
+REDIS_HOST=localhost
+REDIS_PASSWORD=...
+```
+
+### Run locally
+
+Use the VSCode **Run and Debug** panel (a `launch.json` is included). On successful startup you should see:
 
 ```
-INFO: Started server process [20149]
+INFO: Started server process [...]
 INFO: Waiting for application startup.
-[2023-05-17 15:03:21,196] FastAPI:CRITICAL - MySQL DB connected!
-[2023-05-17 15:03:22,103] FastAPI:CRITICAL - Redis CACHE connected!
+FastAPI:CRITICAL - MySQL DB connected!
+FastAPI:CRITICAL - Redis CACHE connected!
 INFO: Application startup complete.
-
 ```
 
-- You can use `curl http://127.0.0.1:8000` to check if the server is running or not, you'll get {"message":"Server is running..."} in response
+Verify with:
 
-#### Prod Server
+```bash
+curl http://127.0.0.1:8000
+# {"message":"Server is running..."}
+```
 
-- `sudo chmod +x certbot.sh && sudo ./certbot.sh`
-- `sudo docker-compose --env-file config/.env up -d --build --remove-orphans`
-- `sudo docker-compose --env-file config/.env down && sudo docker system prune --force --all`
-- `sudo docker exec -it researchgpt_api_1 cat log/app.log`
+### Deploy to production (Docker)
+
+```bash
+# Issue SSL certificates
+sudo chmod +x server/certbot.sh && sudo ./server/certbot.sh
+
+# Start all services
+sudo docker-compose --env-file server/config/.env up -d --build --remove-orphans
+
+# View logs
+sudo docker exec -it researchgpt_api_1 cat log/app.log
+
+# Tear down and clean up
+sudo docker-compose --env-file server/config/.env down && sudo docker system prune --force --all
+```
+
+Set `CERTBOT_EMAIL` and `CERTBOT_DOMAIN` in your `.env` before running certbot.
 
 ---
 
 ## Client Setup
 
-A brief description of the project.
+### Prerequisites
 
-#### Getting Started
+- Node.js (v18+ recommended)
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+### Install and run
 
-#### Prerequisites
+```bash
+cd client
+npm install
+npm run dev       # dev server at http://localhost:8080
+```
 
-What things you need to install the software and how to install them.
+### Build for production
+
+```bash
+npm run build     # output in dist/
+```
+
+Other scripts: `npm run lint`, `npm run check`, `npm run format`.
+
+---
+
+## Environment Variables Reference
+
+| Variable | Description |
+|----------|-------------|
+| `HOST_MAIN` | Allowed CORS origin (your frontend URL) |
+| `DEBUG_MODE` | `1` for debug logging, `0` for production |
+| `JWT_SECRET` | Secret used to sign JWTs |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `DEFAULT_LLM_MODEL` | `gpt_4` or `gpt_3_5_turbo` |
+| `MYSQL_HOST` | MySQL hostname |
+| `MYSQL_USER` | MySQL username |
+| `MYSQL_PASSWORD` | MySQL password |
+| `MYSQL_PORT` | MySQL port (default `3306`) |
+| `MYSQL_DATABASE` | Database name |
+| `REDIS_HOST` | Redis hostname |
+| `REDIS_PORT` | Redis port (default `6379`) |
+| `REDIS_DB` | Redis database index |
+| `REDIS_PASSWORD` | Redis password |
+| `REDIS_USER` | Redis username (default `default`) |
+| `CERTBOT_EMAIL` | Email for Let's Encrypt registration |
+| `CERTBOT_DOMAIN` | Domain for SSL certificate |
+
+See `server/config/.env.example` for the full template.
